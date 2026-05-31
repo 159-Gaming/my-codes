@@ -1,0 +1,232 @@
+#problem {
+        display: none;
+}
+        
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+* {
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.container {
+    display: flex;
+    background-color: white;
+    border-radius: 25px;
+    margin: 20px;
+}
+
+#naming {
+    flex-direction: row;
+    justify-content: center;
+    height: 250px;
+}
+
+.image {
+    width: 200px;
+    height: 200px;
+    background-color: #252525;
+    border-radius: 10%;
+    margin: 20px;
+    flex-shrink: 0;
+    border: 5px solid #252525;
+    box-sizing: border-box;
+}
+
+.name {
+    font-size: 7.5rem;
+    font-weight: bold;
+    height: 200px;
+    width: 75%;
+    background-color: #252525;
+    color: rgb(238, 235, 34);
+    margin: 20px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    flex-shrink:initial;
+}
+
+#name {
+    width: fit-content;
+}
+
+#surname {
+    width: fit-content;
+}
+
+#info {
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+}
+
+.head {
+    font-size: 1.5rem;
+    font-weight: bold;
+    width: auto;
+    background-color: #252525;
+    color: rgb(238, 235, 34);
+    padding-left: 30px;
+    border-radius: 20px;
+}
+
+.details {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin: 10px;
+}
+
+.info-head {
+    display: flex;
+    flex-direction: column;
+    font-size: 1.5rem;
+    font-weight: bold;
+    width: 20%;
+    background-color: #252525;
+    color: white;
+    padding-left: 30px;
+    border-radius: 20px;
+    margin: 10px;
+    justify-content: center;
+    padding: 10px;
+}
+
+.info-main {
+    display: flex;
+    flex-direction: column;
+    font-size: 1.5rem;
+    width: 80%;
+    background-color: #252525;
+    color: white;
+    padding-left: 30px;
+    border-radius: 20px;
+    margin: 10px;
+    justify-content: center;
+    padding: 10px;
+}
+
+@media (max-width: 1180px) and (min-width: 720px) {
+    .name {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 900px) and (min-width: 720px) {
+    .head {
+        font-size: 2rem;
+    }
+
+    .info-head {
+        font-size: 1.5rem;
+        }
+
+    .info-main {
+        font-size: 1.2rem;
+   }
+}
+
+    @media (max-width: 720px) and (min-width: 460px) {
+    .container {
+        flex-direction: row;
+    }
+
+    #naming {
+        height: auto;
+    }
+
+    .image {
+        width: 100px;
+        height: 100px;
+    }
+
+    .name {
+        font-size: 1.5rem;
+        width: 100%;
+        height: 100px;
+        flex-wrap: wrap;
+        flex-shrink: initial;
+        justify-content: space-evenly;
+    }
+
+    .details {
+        align-items: center;
+    }
+
+    .info-head{
+        width: 20%;
+        font-size: 1rem;
+        height: auto;
+    }
+
+    .info-main {
+        width: 80%;
+        font-size: 0.8rem;
+        height: auto;
+    }
+}
+
+@media (max-width: 460px) and (min-width: 260px) {
+    .container {
+        flex-direction: column;
+    }
+
+    #naming {
+        height: auto;
+        flex-wrap: wrap;
+    }
+
+    .image {
+        width: 80%;
+        height: auto;
+    }
+
+    .name {
+        font-size: 1rem;
+        width: 100%;
+        height: 100px;
+        flex-wrap: nowrap;
+        flex-shrink: initial;
+        justify-content: space-evenly;
+    }
+    
+    .head {
+        font-size: 1rem;
+    }
+
+    .details {
+        align-items: center;
+        height: fit-content;
+    }
+
+    .info-head{
+        width: 25%;
+        font-weight: normal;
+        font-size: 0.5rem;
+    }
+
+    .info-main {
+        width: 75%;
+        font-size: 0.4rem;
+    }
+}
+
+@media (max-width: 260px) {
+    div {
+        display:none;
+    }
+
+    #problem {
+        display: block;
+        color: white;
+        font-size: 1.5rem;
+        text-align: center;
+        margin-top: 20px;
+    }
+}
