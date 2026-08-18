@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .body{
+            background-color: rgb(39, 37, 37);
+        }
+
+        .main{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .head{
+            display: flex;
+            width: fit-content;
+            height:auto;
+            color: white;
+            border: 3px solid white;
+            font-size: 30px;
+            border-radius: 20px;
+            padding: 4px 20px;
+            font-family:'Courier New','Courier','monospace';
+        }
+
+        .content{
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            height: 500px;
+            margin-top: 20px;
+            flex-direction: column;
+        }
+
+        .data{
+            display: flex;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .function{
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .content form{
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .input{
+            width: 100%;
+            height: auto;
+        }
+
+        #code{
+            width: 90%;
+            height: 400px;
+            background-color: rgb(39, 37, 37);
+            color: white;
+            font-size: 20px;
+            font-family:'Courier New','Courier','monospace';
+            border: 3px solid white;
+            resize: none;
+            border-radius: 20px;
+            padding: 10px;
+        }
+
+        #canvas{
+            height: 400px;
+            padding: 10px;
+            border: 3px solid white;
+            border-radius: 20px;
+        }
+
+        #run-code{
+            width: fit-content;
+            height: auto;
+            margin-top: 20px;
+            background-color: rgb(39, 37, 37);
+            color: white;
+            font-size: 20px;
+            font-family:'Courier New','Courier','monospace';
+            border: 3px solid white;
+            border-radius: 20px;
+            padding: 5px 15px;
+        }
+
+        #run-code:hover{
+            background-color: white;
+            color: rgb(39, 37, 37);
+        }
+
+        #run-code:active{
+            background-color: rgb(39, 37, 37);
+            color: yellow;
+            border : 3px solid yellow;
+        }
+    </style>
+</head>
+<body class="body">
+    <div class="main">
+        <div class="head">Welcome to code area</div>
+        <div class="content">
+            <div class="data">
+                <form>
+                    <div class="input">
+                        <textarea id="code" placeholder="Write your code here..."></textarea>
+                    </div>
+                </form>
+                <div class="output">
+                    <iframe id="canvas"></iframe>
+                </div>
+            </div>
+            <div class="function">
+                <button id="run-code" type="button" onclick="coderuner()">Run Code</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const runcode = document.getElementById("run-code");
+        const codearea = document.getElementById("code");
+        const canvas = document.getElementById("canvas");
+        const output = document.querySelector(".output");
+        const input = document.querySelector(".input");
+
+        const coderuner = function(){
+            canvas.srcdoc = codearea.value;
+        }
+
+        runcode.onclick = function(){
+            output.innerHTML = `<iframe id="canvas" srcdoc="${codearea.value}" style="background-color: white;border: 3px solid yellow;border-radius: 20px;"></iframe>`;
+            input.innerHTML = `<textarea id="code" placeholder="Write your code here..." style="border: 3px solid yellow;border-radius: 20px;height: 400px;width: 90%;"></textarea>`;
+        }
+    </script>
+</body>
+</html>
