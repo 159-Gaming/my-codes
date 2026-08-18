@@ -33,12 +33,20 @@
         }
 
         .logo {
-            width: 300px;
+            display: flex;
+            width: 350px;
             height: 140px;
             position: relative;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .circles {}
+        .circles {
+            display: flex;
+            box-sizing: border-box;
+            justify-content: center;
+            align-items: center;
+        }
 
         .c1, .c3, .c5, .c7 {
             background-color: rgb(34, 20, 12);
@@ -49,73 +57,15 @@
         }
 
         .c1 {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            position: absolute;
-            top: 10px;
-            left: 10px;
-        }
-
-        .c2 {
-            width: 75px;
-            height: 75px;
-            border-radius: 50%;
-            position: absolute;
-            top: 12.5px;
-            left: 12.5px;
-        }
-
-        .c3 {
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            position: absolute;
-            top: 17.5px;
-            left: 17.5px;
-        }
-
-        .c4 {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            position: absolute;
-            top: 20px;
-            left: 20px;
-        }
-
-        .c5 {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            position: absolute;
-            top: 25px;
-            left: 25px;
-        }
-
-        .c6 {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            position: absolute;
-            top: 30px;
-            left: 30px;
-        }
-
-        .c7 {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            position: absolute;
-            top: 35px;
-            left: 35px;
+            
         }
 
         .text-logo {
             display: flex;
             flex-direction: column;
             justify-content:space-around;
-            align-items: start;
+            left: 100px;
+            box-sizing: border-box;
         }
 
         .l1 {
@@ -134,13 +84,13 @@
         <div class="header">
             <div class="logo">
                 <div class="circles">
-                    <div class="c1"></div>
-                    <div class="c2"></div>
-                    <div class="c3"></div>
-                    <div class="c4"></div>
-                    <div class="c5"></div>
-                    <div class="c6"></div>
-                    <div class="c7"></div>
+                    <div class="c1">
+                        <div class="c2">
+                            <div class="c3">
+                                <div class="c4"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="text-logo">
                     <div class="l1">ROMY KEAN</div>
