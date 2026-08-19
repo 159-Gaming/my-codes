@@ -11,9 +11,8 @@
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'plau', sans-serif;
+            display: flex;
+            font-family: 'plau', sans-serif;    
         }
 
         .main-page {
@@ -21,20 +20,24 @@
             height: 500px;
             background-color: bisque;
             display: flex;
+            position: absolute;
+            top: 140px; 
         }
 
-        header {
+        .header {
             width: 100%;
             height: 140px;
-            padding: 20px;
-            background-color: rgba(255, 255, 255, 0.200);
+            background-color: bisque;
             display: flex;
-            justify-content: center;
+            justify-content:space-between;
+            flex-direction: row;
+            position: fixed;
+            align-items: center;
         }
 
         .logo {
             display: flex;
-            width: 350px;
+            width: 25%;
             height: 140px;
             position: relative;
             justify-content: space-between;
@@ -114,6 +117,43 @@
             font-size: 30px;
             color: rgb(34, 20, 12);
         }
+        
+        .hcontent{
+            display: flex;
+            justify-content: space-between;
+            width: 65%;
+            font-size: 17.5px;
+        }
+
+        .hc1 {
+            width: 60%;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .hc2 {
+            width: 40%;
+            display: flex;
+        }
+
+        .collaborate {
+            width: fit-content;
+            height: 30px;
+            border-radius: 15px;
+        }
+
+        .menu {
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-line {
+            width: 15px;
+            height: 5px;
+        }
     </style>
 </head>
 <body>
@@ -133,20 +173,28 @@
                 <div class="l2">MOTION DESIGNER</div>
             </div>
         </div>
-        <div id="home">HOME</div>
-        <div id="about">ABOUT</div>
-        <div id="services">SERVICES</div>
-        <div id="work">WPRL</div>
-        <div id="experience">EXPERIENCE</div>
-        <div id="contact">CONTACT</div>
-        <div class="collaborate">
-            <div class="text">
-                LET'S COLLABORATE
+        <div class="hcontent">
+            <div class="hc1">
+                <div id="home">HOME</div>
+                <div id="about">ABOUT</div>
+                <div id="services">SERVICES</div>
+                <div id="work">WPRL</div>
+                <div id="experience">EXPERIENCE</div>
+                <div id="contact">CONTACT</div>
             </div>
-        <div class="menu">
-            <div class="menu-line"></div>
-            <div class="menu-line"></div>
-        <div class="menu-line"></div>
+            <div class="hc2"></div>
+                <div class="collaborate">
+                    <div class="text">
+                        LET'S COLLABORATE
+                    </div>
+                </div>
+                <div class="menu">
+                    <div class="menu-line"></div>
+                    <div class="menu-line"></div>
+                    <div class="menu-line"></div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="main-page"></div>
     <div class="info"></div>
