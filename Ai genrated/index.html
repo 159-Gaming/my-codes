@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+
+    <title>Toyota 3D Particle Showcase</title>
+
+    <link rel="stylesheet" href="./styles.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+
+    <aside id="sidebar">
+
+        <h1>Toyota Series</h1>
+
+        <button class="car-btn" data-car="fortuner">
+            Fortuner
+        </button>
+
+        <button class="car-btn" data-car="legender">
+            Legender
+        </button>
+
+        <button class="car-btn" data-car="lc300">
+            LC300
+        </button>
+
+        <button class="car-btn" data-car="innova-crysta">
+            Innova Crysta
+        </button>
+
+        <button class="car-btn" data-car="innova-hycross">
+            Innova Hycross
+        </button>
+
+    </aside>
+
+
+    <main id="stage">
+
+        <div id="loading">
+
+            <div id="loading-title">
+                FORMING SHAPE...
+            </div>
+
+            <div id="progress-row">
+
+                <div id="progress-track">
+                    <div id="progress-fill"></div>
+                </div>
+
+                <span id="progress-number">
+                    0%
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div id="mobile-help">
+            Drag to rotate • pinch to zoom
+        </div>
+
+    </main>
+
+
+    <!-- 1. Initial / common particle engine -->
+    <script src="./initial.js"></script>
+
+    <!-- 2-6. Individual fixed vehicle definitions -->
+    <script src="./fortuner.js"></script>
+    <script src="./legender.js"></script>
+    <script src="./lc300.js"></script>
+    <script src="./innova-crysta.js"></script>
+    <script src="./innova-hycross.js"></script>
+
+</body>
+</html>
