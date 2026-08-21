@@ -15,21 +15,12 @@
             font-family: 'plau', sans-serif;    
         }
 
-        .main-page {
-            width: 100%;
-            height: 500px;
-            background-color: bisque;
-            display: flex;
-            position: absolute;
-            top: 140px; 
-        }
-
         .header {
             width: 100%;
-            height: 140px;
+            height: 75px;
             background-color: bisque;
             display: flex;
-            justify-content:space-between;
+            justify-content: space-between;
             flex-direction: row;
             position: fixed;
             align-items: center;
@@ -37,8 +28,8 @@
 
         .logo {
             display: flex;
-            width: 25%;
-            height: 140px;
+            width: 15%;
+            height: 75px;
             position: relative;
             justify-content: space-between;
             align-items: center;
@@ -61,9 +52,9 @@
         }
 
         .c1 {
-            width: 80px;
-            height: 80px;
-            border: 5px solid rgb(34, 20, 12);
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgb(34, 20, 12);
             border-radius: 50%;
             background-color: bisque;
             display: flex;
@@ -72,9 +63,9 @@
         }
 
         .c2 {
-            width: 65px;
-            height: 65px;
-            border: 5px solid rgb(34, 20, 12);
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgb(34, 20, 12);
             border-radius: 50%;
             background-color: bisque;
             display: flex;
@@ -85,7 +76,7 @@
         .c3 {
             width: 40px;
             height: 40px;
-            border: 5px solid rgb(34, 20, 12);
+            border: 2px solid rgb(34, 20, 12);
             border-radius: 50%;
             background-color: bisque;
             display: flex;
@@ -109,37 +100,47 @@
         }
 
         .l1 {
-            font-size: 50px;
+            font-size: 30px;
             color: rgb(34, 20, 12);
         }
 
         .l2 {
-            font-size: 30px;
+            font-size: 12.5px;
             color: rgb(34, 20, 12);
         }
         
         .hcontent{
             display: flex;
-            justify-content: space-between;
-            width: 65%;
-            font-size: 17.5px;
+            justify-content: space-around;
+            width: 75%;
+            font-size: 12.5px;
+            font-weight: bolder;
         }
 
         .hc1 {
             width: 60%;
             display: flex;
             justify-content: space-around;
+            align-items: center;
         }
 
         .hc2 {
-            width: 40%;
+            width: 25%;
             display: flex;
+            justify-content: space-around;
         }
 
         .collaborate {
             width: fit-content;
             height: 30px;
             border-radius: 15px;
+            background-color: rgb(34, 20, 12);
+            color: bisque;
+            padding-left: 15px;
+            padding-right: 15px;
+            align-items: center;
+            display: flex;
+            justify-content: center;
         }
 
         .menu {
@@ -147,12 +148,33 @@
             height: 30px;
             border-radius: 15px;
             display: flex;
+            background-color: rgb(34, 20, 12);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .menu-lines {
+            width: 25px;
+            height: 25px;
+            display: flex;
             flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
         }
 
         .menu-line {
             width: 15px;
-            height: 5px;
+            height: 2.75px;
+            background-color: bisque;
+        }
+
+        .main-page {
+            width: 100%;
+            height: 500px;
+            background-color: bisque;
+            display: flex;
+            position: absolute;
+            top: 75px; 
         }
     </style>
 </head>
@@ -182,21 +204,29 @@
                 <div id="experience">EXPERIENCE</div>
                 <div id="contact">CONTACT</div>
             </div>
-            <div class="hc2"></div>
+            <div class="hc2">
                 <div class="collaborate">
                     <div class="text">
                         LET'S COLLABORATE
                     </div>
                 </div>
                 <div class="menu">
-                    <div class="menu-line"></div>
-                    <div class="menu-line"></div>
-                    <div class="menu-line"></div>
+                    <div class="menu-lines">
+                        <div class="menu-line"></div>
+                        <div class="menu-line"></div>
+                        <div class="menu-line"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="main-page"></div>
+    <div class="main-page">
+        <div class="base">
+            <div class="mpc1">
+                
+            </div>
+        </div>
+    </div>
     <div class="info"></div>
     <div class="services"></div>
     <div class="skill-and-experience"></div>
