@@ -6,7 +6,13 @@ window.ToyotaCars =
 
 window.ToyotaCars["innova-hycross"] = {
 
-    build(count){
+    buildRange(
+        start,
+        end,
+        positions,
+        colors,
+        count
+    ){
 
         const T =
             window.ToyotaShapeTools;
@@ -14,77 +20,215 @@ window.ToyotaCars["innova-hycross"] = {
         const E =
             window.ToyotaEngine;
 
-        const positions =
-            new Float32Array(
-                count*3
-            );
 
-        const colors =
-            new Float32Array(
-                count*3
-            );
+        const frontWheel =
+            2.61;
 
+        const rearWheel =
+            -2.62;
 
-        const R=.77;
-
-        const front=2.58;
-        const rear=-2.59;
+        const wheelRadius =
+            .79;
 
 
         /*
-           SLEEKER MPV/CROSSOVER PROFILE
+           HYBRID SUV / MPV PROFILE
+
+           More SUV-like shoulder than Crysta,
+           but still long and spacious.
         */
 
-        const profile=[
+        const profile = [
 
-            {x:-4.58,y:.61},
+            {x:-4.60,y:.59},
 
-            {x:-4.36,y:1.00},
+            {x:-4.42,y:.92},
 
-            {x:-3.90,y:1.30},
+            {x:-4.08,y:1.22},
 
-            {x:-1.95,y:1.57},
+            {x:-3.60,y:1.37},
 
-            {x:-1.62,y:2.98},
+            {x:-2.00,y:1.56},
 
-            {x:1.20,y:3.08},
+            {x:-1.64,y:2.94},
 
-            {x:1.48,y:1.52},
+            {x:1.20,y:3.06},
 
-            {x:2.85,y:1.51},
+            {x:1.44,y:1.54},
 
-            {x:4.08,y:1.37},
+            {x:2.98,y:1.53},
 
-            {x:4.58,y:.80}
+            {x:4.09,y:1.37},
+
+            {x:4.59,y:.79}
         ];
 
 
-        for(let i=0;i<count;i++){
+        for(
+            let i=start;
+            i<end;
+            i++
+        ){
 
-            const s=
+            const s =
                 T.sequence(
                     i,
-                    53
+                    55
                 );
 
 
-            const region=s.z;
+            const r =
+                s.z;
+
 
             let p;
             let c;
 
 
             /*
-               BODY
+               MAIN BODY
             */
 
-            if(region<.50){
+            if(r<.38){
 
-                const x=
+                const x =
                     -4.55+
                     s.x*9.10;
 
-                const top=
+
+                const roof =
+                    T.profileY(
+                        x,
+                        profile
+                    );
+
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                /*
+                   Slight fender widening.
+                */
+
+                let width =
+                    1.45;
+
+
+                if(
+                    x>-3.25 &&
+                    x<3.30
+                ){
+
+                    width +=
+                        .10*
+                        Math.sin(
+                            (
+                                x+3.25
+                            )*
+                            Math.PI/
+                            6.55
+                        );
+                }
+
+
+                p={
+
+                    x,
+
+                    y:
+                        .58+
+                        s.y*
+                        Math.max(
+                            .20,
+                            roof-.58
+                        ),
+
+                    z:
+                        side*width
+                };
+
+
+                c=E.AQUA;
+            }
+
+
+            /*
+               RAISED BONNET
+            */
+
+            else if(r<.45){
+
+                p={
+
+                    x:
+                        1.95+
+                        s.x*2.60,
+
+                    y:
+                        1.46+
+                        s.y*.14,
+
+                    z:
+                        -1.38+
+                        s.y*2.76
+                };
+
+
+                c=E.AQUA;
+            }
+
+
+            /*
+               ROOF
+            */
+
+            else if(r<.52){
+
+                const x =
+                    -1.64+
+                    s.x*2.84;
+
+
+                const roof =
+                    T.profileY(
+                        x,
+                        profile
+                    );
+
+
+                p={
+
+                    x,
+
+                    y:roof,
+
+                    z:
+                        -1.40+
+                        s.y*2.80
+                };
+
+
+                c=E.AQUA;
+            }
+
+
+            /*
+               LARGE SIDE WINDOWS
+            */
+
+            else if(r<.66){
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                const x =
+                    -1.60+
+                    s.x*2.94;
+
+
+                const roof =
                     T.profileY(
                         x,
                         profile
@@ -96,47 +240,58 @@ window.ToyotaCars["innova-hycross"] = {
                     x,
 
                     y:
-                        .58+
+                        1.87+
                         s.y*
-                        Math.max(
-                            .22,
-                            top-.58
+                        (
+                            roof-
+                            1.87-
+                            .10
                         ),
 
                     z:
-                        s.y<.5
-                        ? -1.44
-                        : 1.44
+                        side*1.58
                 };
 
-                c=E.AQUA;
+
+                c=E.BLACK;
             }
 
 
             /*
-               SLEEKER GLASS
+               PILLARS / BLACK FRAMES
             */
 
-            else if(region<.69){
+            else if(r<.72){
 
-                const x=
-                    -.78+
-                    s.x*2.92;
+                const side =
+                    s.y<.5?-1:1;
+
+
+                let x;
+
+
+                if(s.x<.30)
+                    x=1.08;
+
+                else if(s.x<.58)
+                    x=.03;
+
+                else
+                    x=-1.23;
+
 
                 p={
 
                     x,
 
                     y:
-                        1.93+
-                        s.y*
-                        .92,
+                        1.86+
+                        s.y*1.12,
 
                     z:
-                        s.y<.5
-                        ? -1.59
-                        : 1.59
+                        side*1.63
                 };
+
 
                 c=E.BLACK;
             }
@@ -146,71 +301,116 @@ window.ToyotaCars["innova-hycross"] = {
                WHEELS
             */
 
-            else if(region<.81){
+            else if(r<.81){
 
-                const x=
+                const x =
                     s.x<.5
-                    ? front
-                    : rear;
+                    ? frontWheel
+                    : rearWheel;
 
-                p=
+
+                p =
                     T.wheel(
                         s,
                         x,
-                        R,
-                        s.y<.5
-                        ? -1.59
-                        : 1.59
+                        wheelRadius,
+                        s.y<.5?-1.64:1.64
                     );
 
-                c=E.BLACK;
-            }
-
-
-            /*
-               MODERN FRONT GRILLE
-            */
-
-            else if(region<.88){
-
-                p={
-
-                    x:
-                        4.64,
-
-                    y:
-                        .78+
-                        s.x*.68,
-
-                    z:
-                        -1.05+
-                        s.y*2.10
-                };
 
                 c=E.BLACK;
             }
 
 
             /*
-               MODERN HEADLIGHT
+               PRONOUNCED FENDER ARCHES
             */
 
-            else if(region<.925){
+            else if(r<.845){
+
+                const x =
+                    s.x<.5
+                    ? frontWheel
+                    : rearWheel;
+
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                p =
+                    T.wheelArch(
+                        s,
+                        x,
+                        wheelRadius*1.11,
+                        side*1.72
+                    );
+
+
+                c=E.BLACK;
+            }
+
+
+            /*
+               LARGE MODERN GRILLE
+            */
+
+            else if(r<.90){
+
+                const z =
+                    -1.16+
+                    s.y*2.32;
+
+
+                const taper =
+                    Math.abs(z)/1.16;
+
 
                 p={
 
                     x:
-                        4.67,
+                        4.65,
 
                     y:
-                        1.27+
-                        s.x*.27,
+                        .76+
+                        s.x*.72+
+                        taper*.05,
+
+                    z
+                };
+
+
+                c=E.BLACK;
+            }
+
+
+            /*
+               TRI-EYE HEADLIGHT AREA
+            */
+
+            else if(r<.94){
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                p={
+
+                    x:
+                        4.69,
+
+                    y:
+                        1.30+
+                        s.x*.31,
 
                     z:
-                        s.y<.5
-                        ? -.98
-                        : .98
+                        side*
+                        (
+                            .92+
+                            s.x*.30
+                        )
                 };
+
 
                 c=E.BLACK;
             }
@@ -220,48 +420,83 @@ window.ToyotaCars["innova-hycross"] = {
                YELLOW INDICATOR
             */
 
-            else if(region<.95){
+            else if(r<.96){
+
+                const side =
+                    s.y<.5?-1:1;
+
 
                 p={
 
                     x:
-                        4.70,
+                        4.71,
 
                     y:
-                        1.07+
-                        s.x*.22,
+                        1.08+
+                        s.x*.20,
 
                     z:
-                        s.y<.5
-                        ? -.90
-                        : .90
+                        side*.88
                 };
+
 
                 c=E.YELLOW;
             }
 
 
             /*
-               LOWER BLACK TRIM
+               CHARACTER LINE
             */
 
-            else{
+            else if(r<.978){
+
+                const side =
+                    s.y<.5?-1:1;
+
 
                 p={
 
                     x:
-                        -2.60+
-                        s.x*5.05,
+                        -3.10+
+                        s.x*6.25,
 
                     y:
-                        .66+
-                        s.y*.17,
+                        1.18+
+                        s.y*.13,
 
                     z:
-                        s.y<.5
-                        ? -1.60
-                        : 1.60
+                        side*1.60
                 };
+
+
+                c=E.AQUA;
+            }
+
+
+            /*
+               LOWER CLADDING
+            */
+
+            else{
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                p={
+
+                    x:
+                        -2.90+
+                        s.x*5.90,
+
+                    y:
+                        .63+
+                        s.y*.18,
+
+                    z:
+                        side*1.63
+                };
+
 
                 c=E.BLACK;
             }
@@ -273,17 +508,12 @@ window.ToyotaCars["innova-hycross"] = {
                 p
             );
 
+
             T.color(
                 colors,
                 i,
                 c
             );
         }
-
-
-        return {
-            positions,
-            colors
-        };
     }
 };

@@ -5,9 +5,9 @@
 
 html,
 body {
-    margin: 0;
     width: 100%;
     height: 100%;
+    margin: 0;
     overflow: hidden;
     background: #1a1a1a;
     color: #fff;
@@ -24,6 +24,8 @@ body {
 ========================================================= */
 
 #sidebar {
+    position: relative;
+
     width: 16.6667vw;
     min-width: 190px;
     height: 100vh;
@@ -49,20 +51,15 @@ body {
 
     color: #00ffff;
 
-    text-align: center;
-
     font-size: 1rem;
     font-weight: 800;
 
     letter-spacing: 2px;
 
+    text-align: center;
+
     text-transform: uppercase;
 }
-
-
-/* =========================================================
-   CAR BUTTONS
-========================================================= */
 
 .car-btn {
     width: 100%;
@@ -72,15 +69,13 @@ body {
     padding: 14px 11px;
 
     border: 1px solid #444;
-
     border-radius: 7px;
 
     background: #222;
 
     color: #ddd;
 
-    font-size: .79rem;
-
+    font-size: .78rem;
     font-weight: 700;
 
     letter-spacing: .35px;
@@ -94,7 +89,7 @@ body {
     transition:
         background .2s ease,
         color .2s ease,
-        border .2s ease,
+        border-color .2s ease,
         transform .2s ease,
         box-shadow .2s ease;
 }
@@ -110,18 +105,29 @@ body {
     transform: translateX(3px);
 
     box-shadow:
-        0 0 18px rgba(0,255,255,.35);
+        0 0 18px rgba(0, 255, 255, .35);
 }
 
 .car-btn:disabled {
-    opacity: .5;
-
+    opacity: .55;
     cursor: wait;
+}
+
+#sidebar-note {
+    margin-top: auto;
+
+    color: #555;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+
+    text-align: center;
 }
 
 
 /* =========================================================
-   STAGE
+   MAIN
 ========================================================= */
 
 #stage {
@@ -130,7 +136,6 @@ body {
     flex: 1;
 
     width: 83.3333vw;
-
     height: 100vh;
 
     overflow: hidden;
@@ -157,27 +162,24 @@ body {
 
     padding: 16px 18px;
 
-    background:
-        rgba(8,8,8,.96);
-
-    border:
-        1px solid #00ffff;
-
+    border: 1px solid #00ffff;
     border-radius: 8px;
 
+    background:
+        rgba(8, 8, 8, .96);
+
     box-shadow:
-        0 0 24px rgba(0,255,255,.2);
+        0 0 25px rgba(0, 255, 255, .22);
 
     pointer-events: none;
 }
 
 #loading-title {
-    margin-bottom: 9px;
+    margin-bottom: 10px;
 
     color: #00ffff;
 
     font-size: .78rem;
-
     font-weight: 800;
 
     letter-spacing: 2px;
@@ -195,7 +197,6 @@ body {
 
 #progress-track {
     width: 220px;
-
     height: 10px;
 
     overflow: hidden;
@@ -203,13 +204,11 @@ body {
     background: #222;
 
     border: 1px solid #00ffff;
-
     border-radius: 5px;
 }
 
 #progress-fill {
     width: 0%;
-
     height: 100%;
 
     background: #00ffff;
@@ -218,7 +217,7 @@ body {
         0 0 10px #00ffff;
 
     transition:
-        width .05s linear;
+        width .04s linear;
 }
 
 #progress-number {
@@ -235,7 +234,7 @@ body {
 
 
 /* =========================================================
-   GITHUB LINK
+   SOURCE LINK
 ========================================================= */
 
 #github-link {
@@ -244,19 +243,17 @@ body {
     left: 18px;
     bottom: 14px;
 
-    z-index: 25;
+    z-index: 30;
 
     padding: 6px 10px;
 
-    border:
-        1px solid #333;
-
+    border: 1px solid #333;
     border-radius: 5px;
 
-    color: #777;
-
     background:
-        rgba(0,0,0,.35);
+        rgba(0, 0, 0, .35);
+
+    color: #666;
 
     font-size: 10px;
 
@@ -275,7 +272,7 @@ body {
 
 
 /* =========================================================
-   MOBILE HELP
+   MOBILE
 ========================================================= */
 
 #mobile-help {
@@ -288,14 +285,14 @@ body {
 
     transform: translateX(-50%);
 
-    z-index: 30;
+    z-index: 25;
 
     padding: 5px 9px;
 
     border-radius: 5px;
 
     background:
-        rgba(0,0,0,.45);
+        rgba(0, 0, 0, .45);
 
     color: #777;
 
@@ -304,12 +301,7 @@ body {
     pointer-events: none;
 }
 
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width:850px) {
+@media (max-width: 850px) {
 
     body {
         flex-direction: column;
@@ -317,22 +309,18 @@ body {
 
     #sidebar {
         width: 100%;
-
         min-width: 0;
 
-        height: 96px;
+        height: 104px;
 
         padding: 8px 9px;
 
         border-right: 0;
-
-        border-bottom:
-            2px solid #00ffff;
+        border-bottom: 2px solid #00ffff;
 
         display: block;
 
         overflow-x: auto;
-
         overflow-y: hidden;
 
         white-space: nowrap;
@@ -355,22 +343,26 @@ body {
 
         width: auto;
 
-        min-width: 92px;
+        min-width: 94px;
 
         margin: 0 4px 0 0;
 
         padding: 9px 7px;
 
-        font-size: .57rem;
+        font-size: .55rem;
 
         text-align: center;
+    }
+
+    #sidebar-note {
+        display: none;
     }
 
     #stage {
         width: 100%;
 
         height:
-            calc(100vh - 96px);
+            calc(100vh - 104px);
     }
 
     #mobile-help {
@@ -379,7 +371,6 @@ body {
 
     #loading {
         right: 10px;
-
         bottom: 10px;
 
         min-width: 245px;
@@ -397,27 +388,25 @@ body {
     }
 }
 
-
-@media (max-width:450px) {
+@media (max-width: 450px) {
 
     #sidebar {
-        height: 104px;
+        height: 112px;
     }
 
     #stage {
         height:
-            calc(100vh - 104px);
+            calc(100vh - 112px);
     }
 
     .car-btn {
         min-width: 82px;
 
-        font-size: .51rem;
+        font-size: .5rem;
     }
 
     #loading {
         left: 50%;
-
         right: auto;
 
         transform:

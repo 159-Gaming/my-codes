@@ -1,102 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Toyota 3D Particle Showcase</title>
-<style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#1a1a1a;color:#fff;font-family:"Segoe UI",Arial,sans-serif}
-body{display:flex}
-#sidebar{width:16.6667vw;min-width:190px;height:100vh;padding:20px;background:#111;border-right:2px solid #00ffff;z-index:20;display:flex;flex-direction:column}
-#sidebar h1{margin:0 0 25px;padding-bottom:12px;border-bottom:1px solid #333;color:#00ffff;text-align:center;font-size:1rem;letter-spacing:2px;text-transform:uppercase}
-.car-btn{width:100%;margin-bottom:11px;padding:14px 11px;border:1px solid #444;border-radius:7px;background:#222;color:#ddd;cursor:pointer;font-size:.79rem;font-weight:700;letter-spacing:.35px;text-align:left;text-transform:uppercase;transition:.2s ease}
-.car-btn:hover:not(:disabled),.car-btn.active{background:#00ffff;color:#000;border-color:#00ffff;transform:translateX(3px);box-shadow:0 0 18px rgba(0,255,255,.35)}
-.car-btn:disabled{opacity:.5;cursor:wait}
-#stage{position:relative;flex:1;height:100vh;overflow:hidden;background:#1a1a1a}
-#fallback{position:absolute;inset:0;width:100%;height:100%;display:none;touch-action:none}
-#loading{position:absolute;right:25px;bottom:25px;z-index:30;display:none;min-width:290px;padding:16px 18px;background:rgba(8,8,8,.96);border:1px solid #00ffff;border-radius:8px;box-shadow:0 0 24px rgba(0,255,255,.2);pointer-events:none}
-#loading-title{margin-bottom:9px;color:#00ffff;font-size:.78rem;font-weight:800;letter-spacing:2px;text-transform:uppercase}
-#progress-row{display:flex;align-items:center;gap:12px}
-#track{width:220px;height:10px;overflow:hidden;background:#222;border:1px solid #00ffff;border-radius:5px}
-#fill{width:0%;height:100%;background:#00ffff;box-shadow:0 0 10px #00ffff}
-#pct{width:45px;color:#00ffff;font-family:monospace;font-weight:800;text-align:right}
-#source{position:absolute;left:18px;bottom:14px;z-index:10;color:#777;font-size:10px;text-decoration:none;padding:6px 10px;border:1px solid #333;border-radius:5px;background:rgba(0,0,0,.35)}
-#source:hover{color:#00ffff;border-color:#00ffff}
-#help{display:none;position:absolute;left:50%;bottom:9px;transform:translateX(-50%);z-index:10;color:#777;font-size:10px;pointer-events:none}
-@media(max-width:850px){body{flex-direction:column}#sidebar{width:100%;height:96px;min-width:0;padding:8px 9px;border-right:0;border-bottom:2px solid #00ffff;display:block;overflow-x:auto;overflow-y:hidden;white-space:nowrap}#sidebar h1{margin:0 0 7px;padding:0;border:0;text-align:left;font-size:.72rem}.car-btn{display:inline-block;width:auto;min-width:92px;margin:0 4px 0 0;padding:9px 7px;font-size:.57rem;text-align:center}#stage{height:calc(100vh - 96px)}#help{display:block}#loading{right:10px;bottom:10px;min-width:245px;padding:12px}#track{width:175px}#source{left:8px;bottom:8px}}@media(max-width:450px){#sidebar{height:104px}#stage{height:calc(100vh - 104px)}.car-btn{min-width:82px;font-size:.51rem}#loading{left:50%;right:auto;transform:translateX(-50%)}}
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+
+    <title>Toyota 3D Particle Showcase</title>
+
+    <!-- GitHub-hosted CSS -->
+    <link
+        rel="stylesheet"
+        href="https://raw.githubusercontent.com/159-Gaming/my-codes/main/Ai%20genrated/styles.css"
+    >
+
+    <!-- Three.js -->
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+    ></script>
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"
+    ></script>
 </head>
+
 <body>
-<aside id="sidebar"><h1>Toyota Series</h1><button class="car-btn" data-car="fortuner">Fortuner</button><button class="car-btn" data-car="legender">Legender</button><button class="car-btn" data-car="lc300">LC300</button><button class="car-btn" data-car="innova-crysta">Innova Crysta</button><button class="car-btn" data-car="innova-hycross">Innova Hycross</button></aside>
-<main id="stage"><div id="loading"><div id="loading-title">Forming Shape...</div><div id="progress-row"><div id="track"><div id="fill"></div></div><div id="pct">0%</div></div></div><a id="source" href="https://github.com/159-Gaming/my-codes/tree/f2fd107157ff2c972d68422faca5cd565d3eb3c0/Ai%20genrated" target="_blank" rel="noopener noreferrer">GitHub Source</a><div id="help">Drag to rotate • pinch/scroll to zoom</div><canvas id="fallback"></canvas></main>
-<script>
-(function(){
-'use strict';
-const stage=document.getElementById('stage'), loading=document.getElementById('loading'), fill=document.getElementById('fill'), pct=document.getElementById('pct'), fallback=document.getElementById('fallback');
-const buttons=[...document.querySelectorAll('.car-btn')];
-const mobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||innerWidth<=850;
-const COUNT=mobile?60000:100000;
-const FALLBACK_COUNT=mobile?18000:30000;
-const AQUA=[0,1,1], BLACK=[0,0,0], YELLOW=[1,.7,0];
-const CARS={
- fortuner:{L:9.3,W:3.24,roof:3.48,body:1.7,hood:1.66,frontCabin:.95,rearCabin:-1.72,wheel:.82,front:2.72,rear:-2.72,style:'fortuner'},
- legender:{L:9.36,W:3.22,roof:3.38,body:1.66,hood:1.63,frontCabin:.98,rearCabin:-1.67,wheel:.81,front:2.74,rear:-2.72,style:'legender'},
- lc300:{L:9.52,W:3.36,roof:3.52,body:1.78,hood:1.76,frontCabin:1.08,rearCabin:-1.79,wheel:.85,front:2.78,rear:-2.79,style:'lc300'},
- 'innova-crysta':{L:9.05,W:3.14,roof:3.18,body:1.6,hood:1.55,frontCabin:1.25,rearCabin:-2,wheel:.76,front:2.55,rear:-2.56,style:'crysta'},
- 'innova-hycross':{L:9.16,W:3.15,roof:3.1,body:1.58,hood:1.54,frontCabin:1.28,rearCabin:-1.95,wheel:.77,front:2.58,rear:-2.59,style:'hycross'}
-};
-let renderer=null,scene=null,camera=null,controls=null,geom=null,mat=null,points=null;
-let mode='none',selected=null,generating=false,whiteStage=false,morphing=false,whiteStart=0,morphStart=0,startTime=performance.now();
-let curPos=null,tgtPos=null,curCol=null,tgtCol=null;
-let bubble=new THREE.Vector2(10,10);
-const firstSeen={};
-function progress(v){const n=Math.max(0,Math.min(100,Math.round(v)));fill.style.width=n+'%';pct.textContent=n+'%'}
-function seq(i,s){const a=.61803398875,b=.75487766625;return{x:(i*a+s*.173)%1,y:(i*b+s*.271)%1,z:(i*(a+b)+s*.119)%1}}
-function color(a,i,c){const n=i*3;a[n]=c[0];a[n+1]=c[1];a[n+2]=c[2]}
-function put(a,i,p){const n=i*3;a[n]=p.x;a[n+1]=p.y;a[n+2]=p.z}
-function wheel(s,cx,r,z){const a=s.x*Math.PI*2,rr=Math.sqrt(s.y)*r;return{x:cx+Math.cos(a)*rr,y:r+Math.sin(a)*rr,z}}
-function profileY(x,p){for(let i=0;i<p.length-1;i++){const a=p[i],b=p[i+1];if(x>=a.x&&x<=b.x){const t=(x-a.x)/(b.x-a.x||1);return a.y+(b.y-a.y)*t}}return p[p.length-1].y}
-function parts(model){const p=CARS[model], out=[], prof={};
- const profiles={
- fortuner:[[-4.65,.62],[-4.45,1.05],[-4,1.4],[-2.1,1.7],[-1.7,3.4],[.9,3.48],[1.15,1.68],[2.85,1.66],[4.15,1.48],[4.65,.85]],
- legender:[[-4.68,.61],[-4.45,1.04],[-4.02,1.37],[-2.02,1.66],[-1.64,3.3],[.92,3.38],[1.15,1.63],[2.8,1.61],[4.12,1.42],[4.68,.79]],
- lc300:[[-4.76,.61],[-4.55,1.04],[-4.12,1.4],[-2.08,1.78],[-1.75,3.48],[1.02,3.52],[1.22,1.76],[2.9,1.75],[4.2,1.52],[4.76,.82]],
- crysta:[[-4.53,.61],[-4.35,1.01],[-3.85,1.35],[-2,1.6],[-1.7,3.08],[1.28,3.18],[1.48,1.55],[2.9,1.54],[4.05,1.38],[4.53,.79]],
- hycross:[[-4.58,.61],[-4.36,1],[-3.9,1.3],[-1.95,1.57],[-1.62,2.98],[1.2,3.08],[1.48,1.52],[2.85,1.51],[4.08,1.37],[4.58,.8]]
- };
- prof[model]=profiles[p.style].map(x=>({x:x[0],y:x[1]}));return{p,profile:prof[model]}}
-function buildCar(model,count){const {p,profile}=parts(model),pos=new Float32Array(count*3),col=new Float32Array(count*3), L=p.L,W=p.W,R=p.wheel;
- for(let i=0;i<count;i++){const s=seq(i,model.length*17+7);const r=s.z;let q,c;
-  if(r<.54){const x=-L/2+s.x*L,top=profileY(x,profile),side=s.y<.5?-1:1;q={x,y:.58+s.y*Math.max(.22,top-.58),z:side*(W/2)};c=AQUA}
-  else if(r<.69){const x=-.9+s.x*3.05;q={x,y:1.94+s.y*(p.roof-1.96),z:s.y<.5?-(W/2+.03):(W/2+.03)};c=BLACK}
-  else if(r<.81){const x=s.x<.5?p.front:p.rear;q=wheel(s,x,R,s.y<.5?-(W/2+.1):(W/2+.1));c=BLACK}
-  else if(r<.88){q={x:L/2+.05,y:.76+s.x*(p.style==='lc300'?.9:.72),z:-W*.35+s.y*W*.7};c=BLACK}
-  else if(r<.925){q={x:L/2+.09,y:1.28+s.x*.28,z:s.y<.5?-W*.38:W*.38};c=BLACK}
-  else if(r<.95){q={x:L/2+.11,y:1.08+s.x*.25,z:s.y<.5?-W*.29:W*.29};c=YELLOW}
-  else {q={x:-L*.28+s.x*(L*.56),y:.67+s.y*.17,z:s.y<.5?-(W/2+.04):(W/2+.04)};c=BLACK}
-  put(pos,i,q);color(col,i,c)
- }
- return{positions:pos,colors:col}
-}
-const vs=`uniform float uTime,uMorph,uWhite,uWaterMotion,uPixelRatio,uViewportHeight;uniform vec2 uBubble;attribute vec3 nextPosition,nextColor;varying vec3 vColor;void main(){vColor=mix(color,nextColor,uMorph);vec3 p=mix(position,nextPosition,uMorph);vec3 s=position;float t=uTime;vec3 flow=vec3(sin(s.x*.37+s.y*.13+t*1.08)+.42*sin(s.z*.21-t*.72),sin(s.y*.29+s.z*.17-t*.91)+.37*sin(s.x*.19+t*.61),sin(s.z*.31+s.x*.11+t*.82)+.34*sin(s.y*.23-t*.49));p+=flow*.055*uWaterMotion*(1.0-uMorph);vec4 clip=projectionMatrix*modelViewMatrix*vec4(p,1.0);vec2 screen=clip.xy/max(abs(clip.w),.0001);vec2 d=screen-uBubble;float dist=length(d),rad=.095,pressure=smoothstep(rad,0.0,dist)*.10*uWaterMotion*(1.0-uMorph);if(dist>.0001&&dist<rad)p+=normalize(d)*pressure;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);float size=4.2*(uViewportHeight/1080.0)*uPixelRatio;gl_PointSize=clamp(size,3.0,8.0)}`;
-const fs=`uniform float uWhite,uMorph;varying vec3 vColor;void main(){float d=distance(gl_PointCoord,vec2(.5));if(d>.5)discard;vec3 c=mix(vColor,vec3(1.0),uWhite);if(uMorph<.5&&uWhite<.75){if(d>.34){gl_FragColor=vec4(0.,0.,0.,1.);}else{float core=smoothstep(.34,.025,d);gl_FragColor=vec4(c,max(core,.94));}}else{float a=smoothstep(.5,.07,d);gl_FragColor=vec4(c,max(a,.97));}}`;
-function tryWebGL(){try{renderer=new THREE.WebGLRenderer({antialias:false,alpha:false,powerPreference:'default',precision:'mediump'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.5:2));renderer.setSize(stage.clientWidth,stage.clientHeight,false);renderer.setClearColor(0x1a1a1a,1);scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(55,stage.clientWidth/Math.max(stage.clientHeight,1),.1,300);camera.position.set(15.5,6.5,18.5);camera.lookAt(.2,1.25,0);controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.065;controls.enablePan=false;controls.minDistance=7;controls.maxDistance=40;controls.rotateSpeed=.75;controls.zoomSpeed=.8;controls.target.set(.2,1.25,0);curPos=new Float32Array(COUNT*3);tgtPos=new Float32Array(COUNT*3);curCol=new Float32Array(COUNT*3);tgtCol=new Float32Array(COUNT*3);for(let i=0;i<COUNT;i++){const n=i*3;curPos[n]=(Math.random()-.5)*100;curPos[n+1]=(Math.random()-.5)*100;curPos[n+2]=(Math.random()-.5)*100;curCol[n]=0;curCol[n+1]=1;curCol[n+2]=1}tgtPos.set(curPos);tgtCol.set(curCol);geom=new THREE.BufferGeometry();geom.setAttribute('position',new THREE.BufferAttribute(curPos,3));geom.setAttribute('nextPosition',new THREE.BufferAttribute(tgtPos,3));geom.setAttribute('color',new THREE.BufferAttribute(curCol,3));geom.setAttribute('nextColor',new THREE.BufferAttribute(tgtCol,3));mat=new THREE.ShaderMaterial({uniforms:{uTime:{value:0},uMorph:{value:0},uWhite:{value:0},uWaterMotion:{value:1},uPixelRatio:{value:Math.min(devicePixelRatio||1,mobile?1.5:2)},uViewportHeight:{value:stage.clientHeight},uBubble:{value:new THREE.Vector2(10,10)}},vertexColors:true,vertexShader:vs,fragmentShader:fs,transparent:true,depthWrite:false,depthTest:true});points=new THREE.Points(geom,mat);scene.add(points);renderer.domElement.addEventListener('pointermove',e=>{const r=renderer.domElement.getBoundingClientRect();mat.uniforms.uBubble.value.set(((e.clientX-r.left)/r.width)*2-1,-(((e.clientY-r.top)/r.height)*2-1))});renderer.domElement.addEventListener('pointerleave',()=>mat.uniforms.uBubble.value.set(10,10));stage.insertBefore(renderer.domElement,stage.firstChild);mode='webgl';return true}catch(e){console.warn('WebGL unavailable, using Canvas fallback',e);if(renderer&&renderer.domElement&&renderer.domElement.parentNode)renderer.domElement.parentNode.removeChild(renderer.domElement);renderer=null;return false}}
-let fbCtx=null,fbPos=null,fbTgt=null,fbCol=null,fbTgtCol=null,fbMorph=0,fbYaw=0,fbPitch=.1,fbZoom=1,drag=false,lastX=0,lastY=0;
-function initFallback(){fallback.style.display='block';fbCtx=fallback.getContext('2d');fbPos=new Float32Array(FALLBACK_COUNT*3);fbTgt=new Float32Array(FALLBACK_COUNT*3);fbCol=new Float32Array(FALLBACK_COUNT*3);fbTgtCol=new Float32Array(FALLBACK_COUNT*3);for(let i=0;i<FALLBACK_COUNT;i++){const n=i*3;fbPos[n]=(Math.random()-.5)*100;fbPos[n+1]=(Math.random()-.5)*100;fbPos[n+2]=(Math.random()-.5)*100;fbCol[n]=0;fbCol[n+1]=1;fbCol[n+2]=1}fbTgt.set(fbPos);fbTgtCol.set(fbCol);resizeFallback();fallback.addEventListener('pointerdown',e=>{drag=true;lastX=e.clientX;lastY=e.clientY});window.addEventListener('pointermove',e=>{if(!drag)return;fbYaw+=(e.clientX-lastX)*.007;fbPitch+=(e.clientY-lastY)*.005;fbPitch=Math.max(-.9,Math.min(.9,fbPitch));lastX=e.clientX;lastY=e.clientY});window.addEventListener('pointerup',()=>drag=false);fallback.addEventListener('wheel',e=>{e.preventDefault();fbZoom*=e.deltaY>0?.92:1.08;fbZoom=Math.max(.55,Math.min(2,fbZoom))},{passive:false});mode='fallback';requestAnimationFrame(drawFallback)}
-function resizeFallback(){if(!fbCtx)return;const d=Math.min(devicePixelRatio||1,2);fallback.width=Math.max(1,Math.floor(stage.clientWidth*d));fallback.height=Math.max(1,Math.floor(stage.clientHeight*d));fbCtx.setTransform(d,0,0,d,0,0)}
-function rot(x,y,z){const cy=Math.cos(fbYaw),sy=Math.sin(fbYaw),cx=Math.cos(fbPitch),sx=Math.sin(fbPitch),x1=x*cy+z*sy,z1=-x*sy+z*cy,y1=y*cx-z1*sx,z2=y*sx+z1*cx;return{x:x1,y:y1,z:z2}}
-function drawFallback(){if(mode!=='fallback')return;requestAnimationFrame(drawFallback);const now=performance.now(),w=stage.clientWidth,h=stage.clientHeight,scale=Math.min(w/14,h/7)*fbZoom;fbCtx.clearRect(0,0,w,h);for(let i=0;i<FALLBACK_COUNT;i++){const n=i*3;let x=fbPos[n],y=fbPos[n+1],z=fbPos[n+2];x+=(fbTgt[n]-x)*fbMorph;y+=(fbTgt[n+1]-y)*fbMorph;z+=(fbTgt[n+2]-z)*fbMorph;if(!selected&&!generating){const t=now*.001;x+=Math.sin(x*.37+y*.13+t*1.08)*.08;y+=Math.sin(y*.29+z*.17-t*.91)*.08;z+=Math.sin(z*.31+x*.11+t*.82)*.08}const r=rot(x,y,z),depth=1+r.z*.012;if(depth<.1)continue;const px=w/2+r.x*scale*depth,py=h*.57-r.y*scale*depth,size=Math.max(.8,Math.min(2.3,1.35*depth));const rr=fbCol[n],gg=fbCol[n+1],bb=fbCol[n+2];if(!selected&&fbMorph<.5){fbCtx.beginPath();fbCtx.arc(px,py,size*1.7,0,Math.PI*2);fbCtx.fillStyle='#000';fbCtx.fill()}fbCtx.beginPath();fbCtx.arc(px,py,size,0,Math.PI*2);fbCtx.fillStyle=rr===0&&gg===0?'#000':rr===1&&gg>.5?'rgb(255,180,0)':'#00ffff';fbCtx.fill()}if(whiteStage){const raw=Math.min((now-whiteStart)/650,1);if(raw>=1){whiteStage=false;morphing=true;morphStart=performance.now();fbMorph=0}}if(morphing){const raw=Math.min((now-morphStart)/2800,1);fbMorph=raw<.5?4*raw*raw*raw:1-Math.pow(-2*raw+2,3)/2;progress(raw*100);if(raw>=1){morphing=false;fbPos.set(fbTgt);fbCol.set(fbTgtCol);fbMorph=0;progress(100);setTimeout(()=>loading.style.display='none',180)}}}
-function progress(v){const n=Math.max(0,Math.min(100,Math.round(v)));fill.style.width=n+'%';pct.textContent=n+'%'}
-function startVehicle(model){const full=buildCar(model,mode==='webgl'?COUNT:FALLBACK_COUNT);if(mode==='webgl'){tgtPos.set(full.positions);tgtCol.set(full.colors);geom.attributes.nextPosition.needsUpdate=true;geom.attributes.nextColor.needsUpdate=true;mat.uniforms.uWaterMotion.value=0;mat.uniforms.uMorph.value=0;mat.uniforms.uWhite.value=0}else{fbTgt.set(full.positions);fbTgtCol.set(full.colors);fbMorph=0}if(!firstSeen[model]){firstSeen[model]=true;whiteStage=true;whiteStart=performance.now()}else{beginMorph()}}
-function beginMorph(){whiteStage=false;morphing=true;morphStart=performance.now();if(mode==='webgl'){mat.uniforms.uWhite.value=1;mat.uniforms.uMorph.value=0}}
-buttons.forEach(btn=>btn.addEventListener('click',()=>{if(generating||whiteStage||morphing)return;buttons.forEach(b=>{b.disabled=true;b.classList.remove('active')});btn.classList.add('active');selected=btn.dataset.car;loading.style.display='block';progress(0);generating=true;requestAnimationFrame(()=>{progress(35);requestAnimationFrame(()=>{progress(72);requestAnimationFrame(()=>{startVehicle(selected);progress(100);generating=false;buttons.forEach(b=>b.disabled=false)})})})}));
-function webglAnimate(){requestAnimationFrame(webglAnimate);const now=performance.now();mat.uniforms.uTime.value=(now-startTime)/1000;if(whiteStage){const raw=Math.min((now-whiteStart)/650,1);mat.uniforms.uWhite.value=raw*raw*(3-2*raw);if(raw>=1)beginMorph()}if(morphing){const raw=Math.min((now-morphStart)/2800,1),e=raw<.5?4*raw*raw*raw:1-Math.pow(-2*raw+2,3)/2;mat.uniforms.uMorph.value=e;mat.uniforms.uWhite.value=Math.max(0,1-raw/.4);progress(raw*100);if(raw>=1){morphing=false;curPos.set(tgtPos);curCol.set(tgtCol);geom.attributes.position.needsUpdate=true;geom.attributes.color.needsUpdate=true;mat.uniforms.uMorph.value=0;mat.uniforms.uWhite.value=0;mat.uniforms.uWaterMotion.value=0;setTimeout(()=>loading.style.display='none',180)}}if(!selected&&!generating){points.rotation.y=Math.sin(now*.00008)*.03;points.rotation.x=Math.sin(now*.00005)*.015}else{points.rotation.y=0;points.rotation.x=0}controls.update();renderer.render(scene,camera)}
-window.addEventListener('resize',()=>{if(mode==='webgl'){const w=stage.clientWidth,h=Math.max(1,stage.clientHeight);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.5:2));renderer.setSize(w,h,false);mat.uniforms.uViewportHeight.value=h}else resizeFallback()});
-if(tryWebGL())webglAnimate();else initFallback();
-})();
-</script>
+
+<aside id="sidebar">
+
+    <h1>Toyota Series</h1>
+
+    <button class="car-btn" data-car="fortuner">
+        Toyota Fortuner
+    </button>
+
+    <button class="car-btn" data-car="legender">
+        Toyota Legender
+    </button>
+
+    <button class="car-btn" data-car="lc300">
+        Toyota LC300
+    </button>
+
+    <button class="car-btn" data-car="innova-crysta">
+        Innova Crysta
+    </button>
+
+    <button class="car-btn" data-car="innova-hycross">
+        Innova HyCross
+    </button>
+
+    <div id="sidebar-note">
+        Select a vehicle to form the particle sculpture.
+    </div>
+
+</aside>
+
+
+<main id="stage">
+
+    <div id="loading">
+
+        <div id="loading-title">
+            FORMING SHAPE...
+        </div>
+
+        <div id="progress-row">
+
+            <div id="progress-track">
+                <div id="progress-fill"></div>
+            </div>
+
+            <span id="progress-number">
+                0%
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div id="mobile-help">
+        Drag to rotate • pinch to zoom
+    </div>
+
+
+    <a
+        id="github-link"
+        href="https://github.com/159-Gaming/my-codes/tree/main/Ai%20genrated"
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        GitHub Source
+    </a>
+
+</main>
+
+
+<!-- ======================================================
+     COMMON ENGINE FIRST
+
+     initial.js only defines tools and waits for window.load
+     before starting the app.
+
+     Therefore the five vehicle modules below are guaranteed
+     to be registered before the engine starts.
+====================================================== -->
+
+<script
+    src="https://raw.githubusercontent.com/159-Gaming/my-codes/main/Ai%20genrated/initial.js"
+></script>
+
+
+<!-- ======================================================
+     FIVE FIXED VEHICLE MODULES
+====================================================== -->
+
+<script
+    src="https://raw.githubusercontent.com/159-Gaming/my-codes/main/Ai%20genrated/fortuner.js"
+></script>
+
+<script
+    src="https://raw.githubusercontent.com/159-Gaming/my-codes/main/Ai%20genrated/legender.js"
+></script>
+
+<script
+    src="https://raw.githubusercontent.com/159-Gaming/my-codes/main/Ai%20genrated/lc300.js"
+></script>
+
+<script
+    src="https://raw.githubusercontent.com/159-Gaming/my-codes/main/Ai%20genrated/innova-crysta.js"
+></script>
+
+<script
+    src="https://raw.githubusercontent.com/159-Gaming/my-codes/main/Ai%20genrated/innova-hycross.js"
+></script>
+
 </body>
 </html>

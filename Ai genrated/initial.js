@@ -1,42 +1,9 @@
 "use strict";
 
-/*
-=============================================================
-TOYOTA PARTICLE ENGINE
-UPDATED DENSITY SYSTEM
 
-Desktop:
-    up to 1,000,000 particles
-
-Mobile:
-    adaptive 80,000 - 250,000 particles
-
-IMPORTANT:
-The engine allocates the maximum required particle buffer,
-but only SHOWS about 100,000 particles initially.
-
-During vehicle generation / formation:
-    100,000
-        ↓
-    200,000
-        ↓
-    400,000
-        ↓
-    700,000
-        ↓
-    1,000,000
-
-This makes the vehicle become progressively denser instead
-of trying to display one million particles immediately.
-
-After formation:
-    all generated particles remain fixed.
-
-The car files do NOT need to be changed because they already
-accept a particle count through build(count).
-=============================================================
-*/
-
+/* =========================================================
+   GLOBAL NAMESPACES
+========================================================= */
 
 window.ToyotaCars =
     window.ToyotaCars || {};
@@ -46,12 +13,21 @@ window.ToyotaShapeTools =
 
 
 /* =========================================================
-   COMMON SHAPE TOOLS
+   SHARED GEOMETRY TOOLS
 ========================================================= */
 
 const Tools =
     window.ToyotaShapeTools;
 
+
+/*
+   Deterministic quasi-random sequence.
+
+   This is deliberately NOT Math.random().
+
+   The same particle index always receives the same
+   sequence values, meaning the vehicle target is fixed.
+*/
 
 Tools.sequence =
 function(index, salt = 1){
@@ -62,104 +38,104 @@ function(index, salt = 1){
     const b =
         0.7548776662466927;
 
+
     return {
 
         x:
             (
-                index*a +
-                salt*.173
+                index * a +
+                salt * .173
             ) % 1,
 
         y:
             (
-                index*b +
-                salt*.271
+                index * b +
+                salt * .271
             ) % 1,
 
         z:
             (
-                index*(a+b) +
-                salt*.119
+                index * (a+b) +
+                salt * .119
             ) % 1
     };
 };
 
 
-Tools.put =
-function(array,index,point){
+/*
+   Linear interpolation.
+*/
 
-    const n =
-        index*3;
-
-    array[n] =
-        point.x;
-
-    array[n+1] =
-        point.y;
-
-    array[n+2] =
-        point.z;
-};
-
-
-Tools.color =
-function(array,index,color){
-
-    const n =
-        index*3;
-
-    array[n] =
-        color[0];
-
-    array[n+1] =
-        color[1];
-
-    array[n+2] =
-        color[2];
-};
-
-
-Tools.wheel =
-function(
-    sequence,
-    centerX,
-    radius,
-    z
-){
-
-    const angle =
-        sequence.x *
-        Math.PI *
-        2;
-
-    const radial =
-        Math.sqrt(
-            sequence.y
-        ) *
-        radius;
+Tools.lerp =
+function(a,b,t){
 
     return {
 
         x:
-            centerX +
-            Math.cos(angle) *
-            radial,
+            a.x +
+            (b.x-a.x)*t,
 
         y:
-            radius +
-            Math.sin(angle) *
-            radial,
+            a.y +
+            (b.y-a.y)*t,
 
-        z
+        z:
+            a.z +
+            (b.z-a.z)*t
     };
 };
 
 
+/*
+   Store a point.
+*/
+
+Tools.put =
+function(array,index,p){
+
+    const n =
+        index*3;
+
+
+    array[n] =
+        p.x;
+
+    array[n+1] =
+        p.y;
+
+    array[n+2] =
+        p.z;
+};
+
+
+/*
+   Store RGB.
+*/
+
+Tools.color =
+function(array,index,c){
+
+    const n =
+        index*3;
+
+
+    array[n] =
+        c[0];
+
+    array[n+1] =
+        c[1];
+
+    array[n+2] =
+        c[2];
+};
+
+
+/*
+   Interpolate a side-profile curve.
+*/
+
 Tools.profileY =
-function(
-    x,
-    profile
-){
+function(x,profile){
 
     for(
         let i=0;
@@ -175,8 +151,8 @@ function(
 
 
         if(
-            x>=a.x &&
-            x<=b.x
+            x >= a.x &&
+            x <= b.x
         ){
 
             const t =
@@ -191,10 +167,7 @@ function(
 
             return (
                 a.y +
-                (
-                    b.y-a.y
-                ) *
-                t
+                (b.y-a.y)*t
             );
         }
     }
@@ -206,40 +179,130 @@ function(
 };
 
 
-/* =========================================================
-   DOM
-========================================================= */
+/*
+   Solid circular wheel disk.
+*/
 
-const stage =
-    document.getElementById(
-        "stage"
-    );
+Tools.wheel =
+function(
+    s,
+    centerX,
+    radius,
+    z
+){
 
-const loading =
-    document.getElementById(
-        "loading"
-    );
+    const angle =
+        s.x*
+        Math.PI*
+        2;
 
-const progressFill =
-    document.getElementById(
-        "progress-fill"
-    );
 
-const progressNumber =
-    document.getElementById(
-        "progress-number"
-    );
+    const radial =
+        Math.sqrt(
+            s.y
+        )*
+        radius;
 
-const buttons =
-    [
-        ...document.querySelectorAll(
-            ".car-btn"
+
+    return {
+
+        x:
+            centerX +
+            Math.cos(angle)*
+            radial,
+
+        y:
+            radius +
+            Math.sin(angle)*
+            radial,
+
+        z
+    };
+};
+
+
+/*
+   Wheel arch.
+*/
+
+Tools.wheelArch =
+function(
+    s,
+    centerX,
+    radius,
+    z
+){
+
+    const angle =
+        s.x*
+        Math.PI;
+
+
+    return {
+
+        x:
+            centerX +
+            Math.cos(angle)*
+            radius,
+
+        y:
+            radius +
+            Math.sin(angle)*
+            radius,
+
+        z
+    };
+};
+
+
+/*
+   Create a point on a rectangular panel.
+*/
+
+Tools.panel =
+function(
+    s,
+    x0,
+    x1,
+    y0,
+    y1,
+    z
+){
+
+    return {
+
+        x:
+            x0 +
+            (x1-x0)*s.x,
+
+        y:
+            y0 +
+            (y1-y0)*s.y,
+
+        z
+    };
+};
+
+
+/*
+   Clamp.
+*/
+
+Tools.clamp =
+function(v,min,max){
+
+    return Math.max(
+        min,
+        Math.min(
+            max,
+            v
         )
-    ];
+    );
+};
 
 
 /* =========================================================
-   DEVICE DETECTION
+   ENGINE CONFIGURATION
 ========================================================= */
 
 const isMobile =
@@ -254,18 +317,19 @@ const deviceMemory =
     4;
 
 
-const hardwareThreads =
+const cpuThreads =
     navigator.hardwareConcurrency ||
     4;
 
 
 /*
-   Maximum density.
+   Maximum particle budget.
 
-   We deliberately do NOT attempt 1 trillion particles.
+   Desktop:
+       500k – 1M
 
-   One million particles is already extremely dense for
-   a browser particle scene.
+   Mobile:
+       80k – 250k
 */
 
 let MAX_PARTICLES;
@@ -273,38 +337,33 @@ let MAX_PARTICLES;
 
 if(!isMobile){
 
-    /*
-       Strong desktop:
-       1,000,000 particles.
-    */
-
     if(
         deviceMemory >= 8 ||
-        hardwareThreads >= 8
+        cpuThreads >= 8
     ){
 
         MAX_PARTICLES =
             1000000;
 
-    }else{
-
-        /*
-           More modest desktop.
-        */
+    }else if(
+        deviceMemory >= 6 ||
+        cpuThreads >= 6
+    ){
 
         MAX_PARTICLES =
-            700000;
+            750000;
+
+    }else{
+
+        MAX_PARTICLES =
+            500000;
     }
 
 }else{
 
-    /*
-       Mobile adaptive density.
-    */
-
     if(
         deviceMemory >= 6 &&
-        hardwareThreads >= 8
+        cpuThreads >= 8
     ){
 
         MAX_PARTICLES =
@@ -312,7 +371,7 @@ if(!isMobile){
 
     }else if(
         deviceMemory >= 4 ||
-        hardwareThreads >= 6
+        cpuThreads >= 6
     ){
 
         MAX_PARTICLES =
@@ -327,13 +386,10 @@ if(!isMobile){
 
 
 /*
-   Starting visible amount.
-
-   This is what the user sees at the beginning of
-   vehicle formation.
+   First visible stage.
 */
 
-const START_VISIBLE =
+const START_PARTICLES =
     Math.min(
         100000,
         MAX_PARTICLES
@@ -341,12 +397,12 @@ const START_VISIBLE =
 
 
 /*
-   Generation progresses through these density levels.
+   Density progression.
 */
 
 const DENSITY_STAGES = [
 
-    START_VISIBLE,
+    START_PARTICLES,
 
     Math.min(
         200000,
@@ -367,160 +423,68 @@ const DENSITY_STAGES = [
 ];
 
 
-/* =========================================================
-   COLORS
-========================================================= */
-
-const AQUA =
-    [0,1,1];
-
-const BLACK =
-    [0,0,0];
-
-const YELLOW =
-    [1,.70,0];
-
-
-/* =========================================================
-   ENGINE STATE
-========================================================= */
-
-let mode =
-    "none";
-
-
-let renderer =
-    null;
-
-let scene =
-    null;
-
-let camera =
-    null;
-
-let controls =
-    null;
-
-let geometry =
-    null;
-
-let material =
-    null;
-
-let particleSystem =
-    null;
-
-
-/* =========================================================
-   MAXIMUM ARRAYS
-========================================================= */
-
-const currentPositions =
-    new Float32Array(
-        MAX_PARTICLES * 3
-    );
-
-const targetPositions =
-    new Float32Array(
-        MAX_PARTICLES * 3
-    );
-
-const currentColors =
-    new Float32Array(
-        MAX_PARTICLES * 3
-    );
-
-const targetColors =
-    new Float32Array(
-        MAX_PARTICLES * 3
-    );
-
-
 /*
-   Each particle receives a stable numeric ID.
-
-   The shader uses it to determine whether that particle
-   is currently visible.
+   Expose configuration to car modules.
 */
 
-const particleIndices =
-    new Float32Array(
-        MAX_PARTICLES
-    );
+window.ToyotaEngine = {
 
+    MAX_PARTICLES,
 
-for(
-    let i=0;
-    i<MAX_PARTICLES;
-    i++
-){
+    START_PARTICLES,
 
-    particleIndices[i] =
-        i;
-}
+    AQUA: [0,1,1],
+
+    BLACK: [0,0,0],
+
+    YELLOW: [1,.70,0]
+};
 
 
 /* =========================================================
-   INITIAL WATER / FOAM CLOUD
+   DOM
 ========================================================= */
 
-for(
-    let i=0;
-    i<MAX_PARTICLES;
-    i++
-){
-
-    const n =
-        i*3;
-
-
-    currentPositions[n] =
-        (
-            Math.random() -
-            .5
-        ) *
-        100;
-
-
-    currentPositions[n+1] =
-        (
-            Math.random() -
-            .5
-        ) *
-        100;
-
-
-    currentPositions[n+2] =
-        (
-            Math.random() -
-            .5
-        ) *
-        100;
-
-
-    currentColors[n] =
-        AQUA[0];
-
-    currentColors[n+1] =
-        AQUA[1];
-
-    currentColors[n+2] =
-        AQUA[2];
-}
-
-
-targetPositions.set(
-    currentPositions
-);
-
-targetColors.set(
-    currentColors
-);
+let stage;
+let loading;
+let progressFill;
+let progressNumber;
+let buttons;
 
 
 /* =========================================================
-   RUNTIME STATE
+   RENDERER
 ========================================================= */
+
+let renderer = null;
+let scene = null;
+let camera = null;
+let controls = null;
+
+let geometry = null;
+let material = null;
+let points = null;
+
+
+/* =========================================================
+   ARRAYS
+========================================================= */
+
+let currentPositions;
+let targetPositions;
+
+let currentColors;
+let targetColors;
+
+let particleIndices;
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let engineMode =
+    "none";
 
 let selectedCar =
     null;
@@ -534,20 +498,17 @@ let whiteFormation =
 let morphing =
     false;
 
-let whiteStarted =
+let whiteStart =
     0;
 
-let morphStarted =
+let morphStart =
     0;
 
-let targetParticleCount =
-    START_VISIBLE;
-
-let visibleParticleCount =
-    START_VISIBLE;
-
-let animationStarted =
+let animationStart =
     performance.now();
+
+let visibleParticles =
+    START_PARTICLES;
 
 
 const firstViewed =
@@ -558,19 +519,13 @@ const firstViewed =
    PROGRESS
 ========================================================= */
 
-function setProgress(
-    value
-){
+function setProgress(value){
 
     const p =
-        Math.max(
+        Tools.clamp(
+            Math.floor(value),
             0,
-            Math.min(
-                100,
-                Math.floor(
-                    value
-                )
-            )
+            100
         );
 
 
@@ -584,45 +539,32 @@ function setProgress(
 
 
 /* =========================================================
-   PROGRESSIVE DENSITY
+   DENSITY MAPPING
 ========================================================= */
 
-function calculateVisibleDensity(
+function densityForProgress(
     progress
 ){
-
-    /*
-       progress:
-           0 → 100
-
-       Convert it into progressively denser stages.
-    */
-
-    const stageCount =
-        DENSITY_STAGES.length;
-
 
     const scaled =
         (
             progress/100
-        ) *
+        )*
         (
-            stageCount-1
+            DENSITY_STAGES.length-1
         );
 
 
     const index =
         Math.min(
-            stageCount-1,
-            Math.floor(
-                scaled
-            )
+            DENSITY_STAGES.length-1,
+            Math.floor(scaled)
         );
 
 
-    const nextIndex =
+    const next =
         Math.min(
-            stageCount-1,
+            DENSITY_STAGES.length-1,
             index+1
         );
 
@@ -631,18 +573,11 @@ function calculateVisibleDensity(
         scaled-index;
 
 
-    const a =
-        DENSITY_STAGES[index];
-
-
-    const b =
-        DENSITY_STAGES[nextIndex];
-
-
     return Math.floor(
-        a+
+        DENSITY_STAGES[index] +
         (
-            b-a
+            DENSITY_STAGES[next] -
+            DENSITY_STAGES[index]
         )*
         local
     );
@@ -650,7 +585,104 @@ function calculateVisibleDensity(
 
 
 /* =========================================================
-   WEBGL SHADERS
+   INITIAL RANDOM WATER
+========================================================= */
+
+function initializeParticleArrays(){
+
+    currentPositions =
+        new Float32Array(
+            MAX_PARTICLES*3
+        );
+
+
+    targetPositions =
+        new Float32Array(
+            MAX_PARTICLES*3
+        );
+
+
+    currentColors =
+        new Float32Array(
+            MAX_PARTICLES*3
+        );
+
+
+    targetColors =
+        new Float32Array(
+            MAX_PARTICLES*3
+        );
+
+
+    particleIndices =
+        new Float32Array(
+            MAX_PARTICLES
+        );
+
+
+    for(
+        let i=0;
+        i<MAX_PARTICLES;
+        i++
+    ){
+
+        const n =
+            i*3;
+
+
+        /*
+           Initial 100×100×100 cloud.
+        */
+
+        currentPositions[n] =
+            (
+                Math.random()-.5
+            )*
+            100;
+
+
+        currentPositions[n+1] =
+            (
+                Math.random()-.5
+            )*
+            100;
+
+
+        currentPositions[n+2] =
+            (
+                Math.random()-.5
+            )*
+            100;
+
+
+        currentColors[n] =
+            0;
+
+        currentColors[n+1] =
+            1;
+
+        currentColors[n+2] =
+            1;
+
+
+        particleIndices[i] =
+            i;
+    }
+
+
+    targetPositions.set(
+        currentPositions
+    );
+
+
+    targetColors.set(
+        currentColors
+    );
+}
+
+
+/* =========================================================
+   SHADERS
 ========================================================= */
 
 const vertexShader = `
@@ -658,19 +690,17 @@ const vertexShader = `
 uniform float uTime;
 uniform float uMorph;
 uniform float uWaterMotion;
-
 uniform float uWhite;
 
 uniform float uPixelRatio;
 uniform float uViewportHeight;
 
-uniform float uBubble;
+uniform vec2 uBubble;
 
 uniform float uVisibleParticles;
 
 attribute vec3 nextPosition;
 attribute vec3 nextColor;
-
 attribute float particleIndex;
 
 varying vec3 vColor;
@@ -678,7 +708,7 @@ varying vec3 vColor;
 void main(){
 
     /*
-       Hide particles that have not yet been activated.
+       Hide not-yet-released particles.
     */
 
     if(
@@ -686,8 +716,7 @@ void main(){
         uVisibleParticles
     ){
 
-        gl_PointSize =
-            0.0;
+        gl_PointSize = 0.0;
 
         gl_Position =
             vec4(
@@ -718,9 +747,9 @@ void main(){
 
 
     /*
-       =====================================================
-       INITIAL WATER / FOAM
-       =====================================================
+       ======================================================
+       WATER / FOAM MOTION
+    ======================================================
     */
 
     vec3 s =
@@ -730,45 +759,44 @@ void main(){
         uTime;
 
 
-    vec3 flow =
-        vec3(
+    vec3 flow = vec3(
 
-            sin(
-                s.x*.37+
-                s.y*.13+
-                t*1.08
-            )
-            +
-            .42*
-            sin(
-                s.z*.21-
-                t*.72
-            ),
+        sin(
+            s.x*.37+
+            s.y*.13+
+            t*1.08
+        )
+        +
+        .42*
+        sin(
+            s.z*.21-
+            t*.72
+        ),
 
-            sin(
-                s.y*.29+
-                s.z*.17-
-                t*.91
-            )
-            +
-            .37*
-            sin(
-                s.x*.19+
-                t*.61
-            ),
+        sin(
+            s.y*.29+
+            s.z*.17-
+            t*.91
+        )
+        +
+        .37*
+        sin(
+            s.x*.19+
+            t*.61
+        ),
 
-            sin(
-                s.z*.31+
-                s.x*.11+
-                t*.82
-            )
-            +
-            .34*
-            sin(
-                s.y*.23-
-                t*.49
-            )
-        );
+        sin(
+            s.z*.31+
+            s.x*.11+
+            t*.82
+        )
+        +
+        .34*
+        sin(
+            s.y*.23-
+            t*.49
+        )
+    );
 
 
     p +=
@@ -781,9 +809,13 @@ void main(){
 
 
     /*
-       =====================================================
-       SMALL AIR BUBBLE
-       =====================================================
+       ======================================================
+       AIR BUBBLE
+    ======================================================
+
+       Tiny radius.
+       Gentle pressure.
+       Only active before formation.
     */
 
     vec4 clip =
@@ -798,28 +830,13 @@ void main(){
     vec2 screen =
         clip.xy/
         max(
-            abs(
-                clip.w
-            ),
+            abs(clip.w),
             .0001
         );
 
 
-    /*
-       uBubble.x = pointer X
-       uBubble.y = pointer Y
-       encoded from the JavaScript side.
-    */
-
-    vec2 bubble=
-        vec2(
-            uBubble,
-            0.0
-        ).xy;
-
-
     vec2 delta =
-        screen-bubble;
+        screen-uBubble;
 
 
     float d =
@@ -862,9 +879,9 @@ void main(){
 
 
     /*
-       =====================================================
+       ======================================================
        FINAL POSITION
-       =====================================================
+    ======================================================
     */
 
     vec4 mv =
@@ -880,8 +897,8 @@ void main(){
         mv;
 
 
-    float size =
-        4.3*
+    float pixelSize =
+        4.35*
         (
             uViewportHeight/
             1080.0
@@ -891,7 +908,7 @@ void main(){
 
     gl_PointSize =
         clamp(
-            size,
+            pixelSize,
             3.0,
             8.5
         );
@@ -902,7 +919,6 @@ void main(){
 const fragmentShader = `
 
 uniform float uWhite;
-
 uniform float uMorph;
 
 varying vec3 vColor;
@@ -912,17 +928,13 @@ void main(){
     float d =
         distance(
             gl_PointCoord,
-            vec2(
-                .5,
-                .5
-            )
+            vec2(.5)
         );
 
 
     if(
         d>.5
     ){
-
         discard;
     }
 
@@ -938,8 +950,7 @@ void main(){
 
 
     /*
-       Initial foam:
-       aqua center + black edge.
+       Initial aqua foam with black rim.
     */
 
     if(
@@ -953,10 +964,10 @@ void main(){
 
             gl_FragColor =
                 vec4(
-                    0.0,
-                    0.0,
-                    0.0,
-                    1.0
+                    0,
+                    0,
+                    0,
+                    1
                 );
 
         }else{
@@ -983,7 +994,7 @@ void main(){
 
         float alpha =
             smoothstep(
-                .5,
+                .50,
                 .07,
                 d
             );
@@ -1003,7 +1014,7 @@ void main(){
 
 
 /* =========================================================
-   WEBGL INIT
+   WEBGL INITIALIZATION
 ========================================================= */
 
 function initializeWebGL(){
@@ -1012,25 +1023,17 @@ function initializeWebGL(){
 
         renderer =
             new THREE.WebGLRenderer({
-
-                antialias:
-                    false,
-
-                alpha:
-                    false,
-
-                precision:
-                    "mediump",
-
-                powerPreference:
-                    "default"
+                antialias:false,
+                alpha:false,
+                precision:"mediump",
+                powerPreference:"default"
             });
 
 
         renderer.setPixelRatio(
             Math.min(
-                window.devicePixelRatio||1,
-                isMobile?1.5:2
+                window.devicePixelRatio || 1,
+                isMobile ? 1.5 : 2
             )
         );
 
@@ -1073,7 +1076,7 @@ function initializeWebGL(){
 
 
         camera.lookAt(
-            .2,
+            .25,
             1.25,
             0
         );
@@ -1105,10 +1108,10 @@ function initializeWebGL(){
             7;
 
         controls.maxDistance =
-            40;
+            42;
 
         controls.target.set(
-            .2,
+            .25,
             1.25,
             0
         );
@@ -1207,37 +1210,25 @@ function initializeWebGL(){
 
                     uVisibleParticles:{
                         value:
-                            START_VISIBLE
+                            START_PARTICLES
                     }
                 },
 
+                vertexColors:true,
 
-                vertexColors:
-                    true,
+                vertexShader,
 
+                fragmentShader,
 
-                vertexShader:
-                    vertexShader,
+                transparent:true,
 
+                depthWrite:false,
 
-                fragmentShader:
-                    fragmentShader,
-
-
-                transparent:
-                    true,
-
-
-                depthWrite:
-                    false,
-
-
-                depthTest:
-                    true
+                depthTest:true
             });
 
 
-        particleSystem =
+        points =
             new THREE.Points(
                 geometry,
                 material
@@ -1245,13 +1236,9 @@ function initializeWebGL(){
 
 
         scene.add(
-            particleSystem
+            points
         );
 
-
-        /*
-           Mouse / touch bubble.
-        */
 
         renderer
             .domElement
@@ -1278,6 +1265,7 @@ function initializeWebGL(){
                                 )/
                                 rect.width
                             )*2-1,
+
 
                             -(
                                 (
@@ -1317,7 +1305,7 @@ function initializeWebGL(){
         );
 
 
-        mode =
+        engineMode =
             "webgl";
 
 
@@ -1331,8 +1319,8 @@ function initializeWebGL(){
         );
 
 
-        renderer =
-            null;
+        renderer = null;
+
 
         return false;
     }
@@ -1340,23 +1328,23 @@ function initializeWebGL(){
 
 
 /* =========================================================
-   VEHICLE TARGET PREPARATION
+   FIXED VEHICLE PREPARATION
 ========================================================= */
 
 function prepareVehicle(
     model,
-    finished
+    complete
 ){
 
-    const definition =
+    const car =
         window.ToyotaCars[
             model
         ];
 
 
     if(
-        !definition ||
-        typeof definition.build !==
+        !car ||
+        typeof car.buildRange !==
         "function"
     ){
 
@@ -1386,111 +1374,103 @@ function prepareVehicle(
 
 
     /*
-       We deliberately build the FULL target shape.
+       Build the fixed target progressively.
 
-       The particle visibility, however, starts at 100k and
-       increases progressively during formation.
-
-       This means the vehicle gets denser instead of the
-       whole million-point buffer appearing instantly.
+       No giant synchronous 1M-point operation.
     */
 
-    setProgress(1);
+    let cursor = 0;
+
+
+    const CHUNK = isMobile
+        ? 25000
+        : 50000;
+
+
+    function buildChunk(){
+
+        const end =
+            Math.min(
+                cursor+CHUNK,
+                MAX_PARTICLES
+            );
+
+
+        car.buildRange(
+            cursor,
+            end,
+            targetPositions,
+            targetColors,
+            MAX_PARTICLES
+        );
+
+
+        cursor =
+            end;
+
+
+        const prepProgress =
+            (
+                cursor/
+                MAX_PARTICLES
+            )*
+            100;
+
+
+        /*
+           Target preparation occupies roughly the first
+           35% of the UI progress.
+        */
+
+        setProgress(
+            prepProgress*.35
+        );
+
+
+        if(
+            cursor <
+            MAX_PARTICLES
+        ){
+
+            requestAnimationFrame(
+                buildChunk
+            );
+
+        }else{
+
+            geometry
+                .getAttribute(
+                    "nextPosition"
+                )
+                .needsUpdate =
+                    true;
+
+
+            geometry
+                .getAttribute(
+                    "nextColor"
+                )
+                .needsUpdate =
+                    true;
+
+
+            /*
+               Target is fully prepared.
+            */
+
+            complete();
+        }
+    }
 
 
     requestAnimationFrame(
-        ()=>{
-
-            let vehicle;
-
-
-            try{
-
-                vehicle =
-                    definition.build(
-                        MAX_PARTICLES
-                    );
-
-            }catch(error){
-
-                console.error(
-                    "Vehicle creation failed:",
-                    error
-                );
-
-
-                loading.style.display =
-                    "none";
-
-
-                generating =
-                    false;
-
-
-                buttons.forEach(
-                    button =>
-                        button.disabled =
-                            false
-                );
-
-
-                return;
-            }
-
-
-            setProgress(20);
-
-
-            requestAnimationFrame(
-                ()=>{
-
-                    targetPositions.set(
-                        vehicle.positions
-                    );
-
-
-                    targetColors.set(
-                        vehicle.colors
-                    );
-
-
-                    geometry
-                        .getAttribute(
-                            "nextPosition"
-                        )
-                        .needsUpdate =
-                            true;
-
-
-                    geometry
-                        .getAttribute(
-                            "nextColor"
-                        )
-                        .needsUpdate =
-                            true;
-
-
-                    /*
-                       We are not changing the visible
-                       density yet. The formation itself will
-                       increase the density.
-                    */
-
-                    setProgress(100);
-
-
-                    requestAnimationFrame(
-                        finished
-                    );
-                }
-            );
-        }
+        buildChunk
     );
 }
 
 
 /* =========================================================
-   START VEHICLE
+   START CAR
 ========================================================= */
 
 function startVehicle(
@@ -1501,19 +1481,22 @@ function startVehicle(
         model;
 
 
-    /*
-       Stop water motion.
-
-       From this moment particles travel to their
-       predetermined target rather than continuing
-       to scatter.
-    */
-
     material
         .uniforms
         .uWaterMotion
         .value =
             0;
+
+
+    visibleParticles =
+        START_PARTICLES;
+
+
+    material
+        .uniforms
+        .uVisibleParticles
+        .value =
+            visibleParticles;
 
 
     material
@@ -1530,30 +1513,6 @@ function startVehicle(
             0;
 
 
-    /*
-       Start with only 100k particles visible.
-    */
-
-    visibleParticleCount =
-        START_VISIBLE;
-
-
-    targetParticleCount =
-        MAX_PARTICLES;
-
-
-    material
-        .uniforms
-        .uVisibleParticles
-        .value =
-            visibleParticleCount;
-
-
-    /*
-       First time a particular model is shown:
-       white transition first.
-    */
-
     if(
         !firstViewed[model]
     ){
@@ -1561,13 +1520,12 @@ function startVehicle(
         firstViewed[model] =
             true;
 
+
         whiteFormation =
             true;
 
-        morphing =
-            false;
 
-        whiteStarted =
+        whiteStart =
             performance.now();
 
     }else{
@@ -1578,7 +1536,7 @@ function startVehicle(
 
 
 /* =========================================================
-   MORPH
+   BEGIN MORPH
 ========================================================= */
 
 function beginMorph(){
@@ -1586,10 +1544,12 @@ function beginMorph(){
     whiteFormation =
         false;
 
+
     morphing =
         true;
 
-    morphStarted =
+
+    morphStart =
         performance.now();
 
 
@@ -1612,88 +1572,97 @@ function beginMorph(){
    BUTTONS
 ========================================================= */
 
-buttons.forEach(
-    button=>{
+function bindButtons(){
 
-        button.addEventListener(
-            "click",
-            ()=>{
+    buttons.forEach(
+        button=>{
 
-                if(
-                    generating ||
-                    whiteFormation ||
-                    morphing
-                ){
+            button.addEventListener(
+                "click",
+                ()=>{
 
-                    return;
+                    if(
+                        generating ||
+                        morphing ||
+                        whiteFormation
+                    ){
+                        return;
+                    }
+
+
+                    buttons.forEach(
+                        b=>{
+
+                            b.disabled =
+                                true;
+
+                            b.classList.remove(
+                                "active"
+                            );
+                        }
+                    );
+
+
+                    button.classList.add(
+                        "active"
+                    );
+
+
+                    const model =
+                        button.dataset.car;
+
+
+                    generating =
+                        true;
+
+
+                    selectedCar =
+                        null;
+
+
+                    loading.style.display =
+                        "block";
+
+
+                    setProgress(0);
+
+
+                    prepareVehicle(
+                        model,
+                        ()=>{
+
+                            /*
+                               Target preparation is now
+                               complete.
+
+                               Start actual visual formation.
+                            */
+
+                            generating =
+                                false;
+
+
+                            buttons.forEach(
+                                b =>
+                                    b.disabled =
+                                        false
+                            );
+
+
+                            startVehicle(
+                                model
+                            );
+                        }
+                    );
                 }
-
-
-                buttons.forEach(
-                    b=>{
-
-                        b.disabled =
-                            true;
-
-                        b.classList.remove(
-                            "active"
-                        );
-                    }
-                );
-
-
-                button.classList.add(
-                    "active"
-                );
-
-
-                const model =
-                    button.dataset.car;
-
-
-                generating =
-                    true;
-
-
-                selectedCar =
-                    null;
-
-
-                loading.style.display =
-                    "block";
-
-
-                setProgress(0);
-
-
-                prepareVehicle(
-                    model,
-                    ()=>{
-
-                        generating =
-                            false;
-
-
-                        buttons.forEach(
-                            b =>
-                                b.disabled =
-                                    false
-                        );
-
-
-                        startVehicle(
-                            model
-                        );
-                    }
-                );
-            }
-        );
-    }
-);
+            );
+        }
+    );
+}
 
 
 /* =========================================================
-   MAIN WEBGL ANIMATION
+   ANIMATION
 ========================================================= */
 
 function animate(){
@@ -1712,17 +1681,15 @@ function animate(){
         .uTime
         .value =
             (
-                now -
-                animationStarted
+                now-
+                animationStart
             )/
             1000;
 
 
-    /*
-       =====================================================
+    /* =====================================================
        WHITE FORMATION
-       =====================================================
-    */
+    ===================================================== */
 
     if(
         whiteFormation
@@ -1731,10 +1698,10 @@ function animate(){
         const raw =
             Math.min(
                 (
-                    now -
-                    whiteStarted
+                    now-
+                    whiteStart
                 )/
-                650,
+                700,
                 1
             );
 
@@ -1754,16 +1721,12 @@ function animate(){
 
 
         /*
-           While becoming white, slowly begin increasing
-           the particle density.
+           Slight density increase during white stage.
         */
 
-        visibleParticleCount =
-            Math.max(
-                START_VISIBLE,
-                calculateVisibleDensity(
-                    raw*25
-                )
+        visibleParticles =
+            densityForProgress(
+                raw*20
             );
 
 
@@ -1771,7 +1734,7 @@ function animate(){
             .uniforms
             .uVisibleParticles
             .value =
-                visibleParticleCount;
+                visibleParticles;
 
 
         if(
@@ -1783,11 +1746,9 @@ function animate(){
     }
 
 
-    /*
-       =====================================================
+    /* =====================================================
        VEHICLE MORPH
-       =====================================================
-    */
+    ===================================================== */
 
     if(
         morphing
@@ -1796,28 +1757,28 @@ function animate(){
         const raw =
             Math.min(
                 (
-                    now -
-                    morphStarted
+                    now-
+                    morphStart
                 )/
-                3600,
+                3800,
                 1
             );
 
 
         const eased =
-            raw<.5
+            raw < .5
 
-            ?4*
-             raw*
-             raw*
-             raw
+            ? 4*
+              raw*
+              raw*
+              raw
 
-            :1-
-             Math.pow(
-                 -2*raw+2,
-                 3
-             )/
-             2;
+            : 1-
+              Math.pow(
+                  -2*raw+2,
+                  3
+              )/
+              2;
 
 
         material
@@ -1828,7 +1789,7 @@ function animate(){
 
 
         /*
-           White fades into real car colors.
+           White → final colours.
         */
 
         material
@@ -1838,25 +1799,22 @@ function animate(){
                 Math.max(
                     0,
                     1-
-                    raw/.40
+                    raw/.38
                 );
 
 
         /*
-           THIS IS THE IMPORTANT PART.
+           Density increases continuously.
 
-           Density rises during the actual image
-           formation.
-
-           0%   → ~100k
-           25%  → ~200k
-           50%  → ~400k
-           75%  → ~700k
-           100% → maximum
+           0%   = ~100k
+           25%  = ~200k
+           50%  = ~400k
+           75%  = ~700k
+           100% = device maximum
         */
 
-        visibleParticleCount =
-            calculateVisibleDensity(
+        visibleParticles =
+            densityForProgress(
                 raw*100
             );
 
@@ -1865,11 +1823,16 @@ function animate(){
             .uniforms
             .uVisibleParticles
             .value =
-                visibleParticleCount;
+                visibleParticles;
 
+
+        /*
+           Progress represents the actual visible formation.
+        */
 
         setProgress(
-            raw*100
+            35+
+            raw*65
         );
 
 
@@ -1882,7 +1845,22 @@ function animate(){
 
 
             /*
-               FINAL PARTICLE POSITION LOCK.
+               Final density.
+            */
+
+            visibleParticles =
+                MAX_PARTICLES;
+
+
+            material
+                .uniforms
+                .uVisibleParticles
+                .value =
+                    MAX_PARTICLES;
+
+
+            /*
+               Copy fixed target into active position buffer.
             */
 
             currentPositions.set(
@@ -1911,21 +1889,6 @@ function animate(){
                     true;
 
 
-            /*
-               Every generated particle is now visible.
-            */
-
-            visibleParticleCount =
-                MAX_PARTICLES;
-
-
-            material
-                .uniforms
-                .uVisibleParticles
-                .value =
-                    MAX_PARTICLES;
-
-
             material
                 .uniforms
                 .uMorph
@@ -1941,7 +1904,7 @@ function animate(){
 
 
             /*
-               Completely freeze the vehicle.
+               FINAL FREEZE.
             */
 
             material
@@ -1961,7 +1924,9 @@ function animate(){
                 );
 
 
-            setProgress(100);
+            setProgress(
+                100
+            );
 
 
             setTimeout(
@@ -1975,36 +1940,44 @@ function animate(){
     }
 
 
-    /*
-       =====================================================
+    /* =====================================================
        NO MODEL SELECTED
-       =====================================================
-
-       Entire 100x100x100 cloud remains alive.
-    */
+    ===================================================== */
 
     if(
         !selectedCar &&
         !generating
     ){
 
-        particleSystem.rotation.y =
+        /*
+           The entire particle cloud has slow irregular
+           movement.
+
+           It is deliberately NOT an orbit.
+        */
+
+        points.rotation.y =
             Math.sin(
                 now*.00008
             )*.03;
 
 
-        particleSystem.rotation.x =
+        points.rotation.x =
             Math.sin(
                 now*.00005
             )*.015;
 
     }else{
 
-        particleSystem.rotation.y =
+        /*
+           Finished cars do not auto rotate.
+           OrbitControls controls them.
+        */
+
+        points.rotation.y =
             0;
 
-        particleSystem.rotation.x =
+        points.rotation.x =
             0;
     }
 
@@ -2023,124 +1996,1108 @@ function animate(){
    RESIZE
 ========================================================= */
 
-window.addEventListener(
-    "resize",
-    ()=>{
+function resize(){
 
-        if(
-            mode !==
-            "webgl"
-        ){
-
-            return;
-        }
+    if(
+        engineMode !==
+        "webgl"
+    ){
+        return;
+    }
 
 
-        const width =
-            stage.clientWidth;
+    const width =
+        stage.clientWidth;
 
 
-        const height =
-            Math.max(
-                1,
-                stage.clientHeight
-            );
+    const height =
+        Math.max(
+            1,
+            stage.clientHeight
+        );
 
 
-        camera.aspect =
-            width/height;
+    camera.aspect =
+        width/height;
 
 
-        camera.updateProjectionMatrix();
+    camera.updateProjectionMatrix();
 
 
-        renderer.setPixelRatio(
+    renderer.setPixelRatio(
+        Math.min(
+            window.devicePixelRatio||1,
+            isMobile?1.5:2
+        )
+    );
+
+
+    renderer.setSize(
+        width,
+        height,
+        false
+    );
+
+
+    material
+        .uniforms
+        .uPixelRatio
+        .value =
             Math.min(
                 window.devicePixelRatio||1,
                 isMobile?1.5:2
-            )
-        );
+            );
 
 
-        renderer.setSize(
-            width,
-            height,
-            false
-        );
-
-
-        material
-            .uniforms
-            .uPixelRatio
-            .value =
-                Math.min(
-                    window.devicePixelRatio||1,
-                    isMobile?1.5:2
-                );
-
-
-        material
-            .uniforms
-            .uViewportHeight
-            .value =
-                height;
-    }
-);
+    material
+        .uniforms
+        .uViewportHeight
+        .value =
+            height;
+}
 
 
 /* =========================================================
    START
 ========================================================= */
 
-if(
-    initializeWebGL()
-){
+function startApp(){
 
-    animate();
-
-}else{
-
-    /*
-       WebGL is genuinely unavailable.
-
-       The existing project architecture can use its
-       Canvas fallback here if you keep that fallback in
-       your initial.js.
-
-       We intentionally do not attempt 1,000,000 Canvas
-       particles because that would destroy mobile
-       performance.
-    */
-
-    const message =
-        document.createElement(
-            "div"
+    stage =
+        document.getElementById(
+            "stage"
         );
 
 
-    message.style.cssText =
-        `
-        position:absolute;
-        inset:0;
-
-        display:flex;
-        align-items:center;
-        justify-content:center;
-
-        padding:30px;
-
-        color:#00ffff;
-
-        text-align:center;
-
-        font-size:14px;
-        `;
+    loading =
+        document.getElementById(
+            "loading"
+        );
 
 
-    message.textContent =
-        "GPU rendering is unavailable on this device.";
+    progressFill =
+        document.getElementById(
+            "progress-fill"
+        );
 
-    stage.appendChild(
-        message
+
+    progressNumber =
+        document.getElementById(
+            "progress-number"
+        );
+
+
+    buttons =
+        [
+            ...document.querySelectorAll(
+                ".car-btn"
+            )
+        ];
+
+
+    initializeParticleArrays();
+
+
+    /*
+       Try GPU rendering.
+    */
+
+    if(
+        initializeWebGL()
+    ){
+
+        bindButtons();
+
+        animate();
+
+    }else{
+
+        /*
+           Canvas fallback is initialized by the
+           separate fallback function below.
+        */
+
+        initializeCanvasFallback();
+
+        bindButtons();
+    }
+}
+
+
+/* =========================================================
+   CANVAS FALLBACK
+========================================================= */
+
+let fallbackCanvas = null;
+let fallbackContext = null;
+
+let fallbackPositions = null;
+let fallbackTargets = null;
+
+let fallbackColors = null;
+let fallbackTargetColors = null;
+
+let fallbackCount =
+    isMobile
+    ? Math.min(30000, MAX_PARTICLES)
+    : Math.min(50000, MAX_PARTICLES);
+
+
+let fallbackMorph =
+    0;
+
+let fallbackYaw =
+    0;
+
+let fallbackPitch =
+    .10;
+
+let fallbackZoom =
+    1;
+
+let fallbackDragging =
+    false;
+
+let fallbackLastX =
+    0;
+
+let fallbackLastY =
+    0;
+
+let fallbackBubbleX =
+    -10000;
+
+let fallbackBubbleY =
+    -10000;
+
+let fallbackBubbleActive =
+    false;
+
+
+/* =========================================================
+   FALLBACK INITIALIZATION
+========================================================= */
+
+function initializeCanvasFallback(){
+
+    fallbackCanvas =
+        document.createElement(
+            "canvas"
+        );
+
+
+    fallbackCanvas.id =
+        "canvas-fallback";
+
+
+    fallbackCanvas.style.position =
+        "absolute";
+
+
+    fallbackCanvas.style.inset =
+        "0";
+
+
+    fallbackCanvas.style.width =
+        "100%";
+
+
+    fallbackCanvas.style.height =
+        "100%";
+
+
+    fallbackCanvas.style.touchAction =
+        "none";
+
+
+    fallbackContext =
+        fallbackCanvas.getContext(
+            "2d"
+        );
+
+
+    stage.insertBefore(
+        fallbackCanvas,
+        stage.firstChild
+    );
+
+
+    fallbackPositions =
+        new Float32Array(
+            fallbackCount*3
+        );
+
+
+    fallbackTargets =
+        new Float32Array(
+            fallbackCount*3
+        );
+
+
+    fallbackColors =
+        new Float32Array(
+            fallbackCount*3
+        );
+
+
+    fallbackTargetColors =
+        new Float32Array(
+            fallbackCount*3
+        );
+
+
+    for(
+        let i=0;
+        i<fallbackCount;
+        i++
+    ){
+
+        const n=
+            i*3;
+
+
+        fallbackPositions[n] =
+            (
+                Math.random()-.5
+            )*100;
+
+
+        fallbackPositions[n+1] =
+            (
+                Math.random()-.5
+            )*100;
+
+
+        fallbackPositions[n+2] =
+            (
+                Math.random()-.5
+            )*100;
+
+
+        fallbackColors[n] =
+            0;
+
+        fallbackColors[n+1] =
+            1;
+
+        fallbackColors[n+2] =
+            1;
+    }
+
+
+    fallbackTargets.set(
+        fallbackPositions
+    );
+
+
+    fallbackTargetColors.set(
+        fallbackColors
+    );
+
+
+    resizeCanvas();
+
+
+    fallbackCanvas.addEventListener(
+        "pointerdown",
+        event=>{
+
+            fallbackDragging =
+                true;
+
+
+            fallbackLastX =
+                event.clientX;
+
+
+            fallbackLastY =
+                event.clientY;
+        }
+    );
+
+
+    window.addEventListener(
+        "pointermove",
+        event=>{
+
+            if(
+                !fallbackDragging
+            ){
+                return;
+            }
+
+
+            const dx =
+                event.clientX-
+                fallbackLastX;
+
+
+            const dy =
+                event.clientY-
+                fallbackLastY;
+
+
+            fallbackYaw +=
+                dx*.007;
+
+
+            fallbackPitch +=
+                dy*.005;
+
+
+            fallbackPitch =
+                Tools.clamp(
+                    fallbackPitch,
+                    -.9,
+                    .9
+                );
+
+
+            fallbackLastX =
+                event.clientX;
+
+
+            fallbackLastY =
+                event.clientY;
+        }
+    );
+
+
+    window.addEventListener(
+        "pointerup",
+        ()=>{
+            fallbackDragging =
+                false;
+        }
+    );
+
+
+    fallbackCanvas.addEventListener(
+        "wheel",
+        event=>{
+
+            event.preventDefault();
+
+
+            fallbackZoom *=
+                event.deltaY>0
+                ? .92
+                : 1.08;
+
+
+            fallbackZoom =
+                Tools.clamp(
+                    fallbackZoom,
+                    .55,
+                    2
+                );
+        },
+        {
+            passive:false
+        }
+    );
+
+
+    fallbackCanvas.addEventListener(
+        "pointermove",
+        event=>{
+
+            const rect =
+                fallbackCanvas
+                .getBoundingClientRect();
+
+
+            fallbackBubbleX =
+                event.clientX-
+                rect.left;
+
+
+            fallbackBubbleY =
+                event.clientY-
+                rect.top;
+
+
+            fallbackBubbleActive =
+                true;
+        }
+    );
+
+
+    fallbackCanvas.addEventListener(
+        "pointerleave",
+        ()=>{
+            fallbackBubbleActive =
+                false;
+        }
+    );
+
+
+    engineMode =
+        "canvas";
+
+
+    requestAnimationFrame(
+        animateCanvas
     );
 }
+
+
+/* =========================================================
+   CANVAS RESIZE
+========================================================= */
+
+function resizeCanvas(){
+
+    if(
+        !fallbackCanvas ||
+        !fallbackContext
+    ){
+        return;
+    }
+
+
+    const dpr =
+        Math.min(
+            window.devicePixelRatio||1,
+            2
+        );
+
+
+    fallbackCanvas.width =
+        Math.max(
+            1,
+            Math.floor(
+                stage.clientWidth*dpr
+            )
+        );
+
+
+    fallbackCanvas.height =
+        Math.max(
+            1,
+            Math.floor(
+                stage.clientHeight*dpr
+            )
+        );
+
+
+    fallbackContext.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+    );
+}
+
+
+/* =========================================================
+   CANVAS 3D ROTATION
+========================================================= */
+
+function rotateFallback(
+    x,
+    y,
+    z
+){
+
+    const cy =
+        Math.cos(
+            fallbackYaw
+        );
+
+    const sy =
+        Math.sin(
+            fallbackYaw
+        );
+
+    const cx =
+        Math.cos(
+            fallbackPitch
+        );
+
+    const sx =
+        Math.sin(
+            fallbackPitch
+        );
+
+
+    const x1 =
+        x*cy+
+        z*sy;
+
+
+    const z1 =
+        -x*sy+
+        z*cy;
+
+
+    const y1 =
+        y*cx-
+        z1*sx;
+
+
+    const z2 =
+        y*sx+
+        z1*cx;
+
+
+    return {
+        x:x1,
+        y:y1,
+        z:z2
+    };
+}
+
+
+/* =========================================================
+   CANVAS VEHICLE TARGET
+========================================================= */
+
+function createFallbackVehicle(
+    model
+){
+
+    const car =
+        window.ToyotaCars[
+            model
+        ];
+
+
+    if(
+        !car ||
+        typeof car.buildRange !==
+        "function"
+    ){
+
+        return false;
+    }
+
+
+    /*
+       Use the same fixed geometry logic but only sample
+       the first part of the deterministic cloud.
+    */
+
+    car.buildRange(
+        0,
+        fallbackCount,
+        fallbackTargets,
+        fallbackTargetColors,
+        fallbackCount
+    );
+
+
+    return true;
+}
+
+
+/* =========================================================
+   CANVAS ANIMATION
+========================================================= */
+
+function animateCanvas(){
+
+    requestAnimationFrame(
+        animateCanvas
+    );
+
+
+    const now =
+        performance.now();
+
+
+    const width =
+        stage.clientWidth;
+
+
+    const height =
+        stage.clientHeight;
+
+
+    const ctx =
+        fallbackContext;
+
+
+    ctx.clearRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    const scale =
+        Math.min(
+            width/14,
+            height/7
+        )*
+        fallbackZoom;
+
+
+    const moving =
+        !selectedCar &&
+        !generating;
+
+
+    const time =
+        now*.001;
+
+
+    for(
+        let i=0;
+        i<fallbackCount;
+        i++
+    ){
+
+        const n=
+            i*3;
+
+
+        let x=
+            fallbackPositions[n];
+
+        let y=
+            fallbackPositions[n+1];
+
+        let z=
+            fallbackPositions[n+2];
+
+
+        x +=
+            (
+                fallbackTargets[n]-
+                x
+            )*
+            fallbackMorph;
+
+
+        y +=
+            (
+                fallbackTargets[n+1]-
+                y
+            )*
+            fallbackMorph;
+
+
+        z +=
+            (
+                fallbackTargets[n+2]-
+                z
+            )*
+            fallbackMorph;
+
+
+        /*
+           Water movement.
+        */
+
+        if(moving){
+
+            x +=
+                (
+                    Math.sin(
+                        x*.37+
+                        y*.13+
+                        time*1.08
+                    )
+                )*
+                .10;
+
+
+            y +=
+                (
+                    Math.sin(
+                        y*.29+
+                        z*.17-
+                        time*.91
+                    )
+                )*
+                .10;
+
+
+            z +=
+                (
+                    Math.sin(
+                        z*.31+
+                        x*.11+
+                        time*.82
+                    )
+                )*
+                .10;
+        }
+
+
+        /*
+           Bubble interaction.
+        */
+
+        if(
+            moving &&
+            fallbackBubbleActive
+        ){
+
+            const r =
+                rotateFallback(
+                    x,
+                    y,
+                    z
+                );
+
+
+            const depth =
+                1+
+                r.z*.012;
+
+
+            const px =
+                width/2+
+                r.x*
+                scale*
+                depth;
+
+
+            const py =
+                height*.57-
+                r.y*
+                scale*
+                depth;
+
+
+            const dx =
+                px-
+                fallbackBubbleX;
+
+
+            const dy =
+                py-
+                fallbackBubbleY;
+
+
+            const distance =
+                Math.sqrt(
+                    dx*dx+
+                    dy*dy
+                );
+
+
+            const radius =
+                42;
+
+
+            if(
+                distance>1 &&
+                distance<radius
+            ){
+
+                const pressure =
+                    (
+                        1-
+                        distance/radius
+                    )*
+                    .75;
+
+
+                x +=
+                    (
+                        dx/distance
+                    )*
+                    pressure;
+
+
+                y +=
+                    (
+                        -dy/distance
+                    )*
+                    pressure;
+            }
+        }
+
+
+        const r =
+            rotateFallback(
+                x,
+                y,
+                z
+            );
+
+
+        const depth =
+            1+
+            r.z*.012;
+
+
+        if(
+            depth<.08
+        ){
+            continue;
+        }
+
+
+        const px =
+            width/2+
+            r.x*
+            scale*
+            depth;
+
+
+        const py =
+            height*.57-
+            r.y*
+            scale*
+            depth;
+
+
+        const radius =
+            Math.max(
+                .8,
+                Math.min(
+                    2.3,
+                    1.4*depth
+                )
+            );
+
+
+        let color =
+            "#00ffff";
+
+
+        const cr =
+            fallbackColors[n];
+
+
+        const cg =
+            fallbackColors[n+1];
+
+
+        const cb =
+            fallbackColors[n+2];
+
+
+        if(
+            cr===0 &&
+            cg===0 &&
+            cb===0
+        ){
+
+            color =
+                "#000";
+        }
+
+
+        if(
+            cr===1 &&
+            cg>.5 &&
+            cb===0
+        ){
+
+            color =
+                "rgb(255,180,0)";
+        }
+
+
+        /*
+           White formation.
+        */
+
+        if(
+            whiteFormation
+        ){
+
+            color =
+                "#fff";
+        }
+
+
+        /*
+           Initial black rim.
+        */
+
+        if(
+            !selectedCar &&
+            fallbackMorph<.5 &&
+            !whiteFormation
+        ){
+
+            ctx.beginPath();
+
+            ctx.arc(
+                px,
+                py,
+                radius*1.7,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fillStyle =
+                "#000";
+
+            ctx.fill();
+        }
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            px,
+            py,
+            radius,
+            0,
+            Math.PI*2
+        );
+
+
+        ctx.fillStyle =
+            color;
+
+
+        ctx.fill();
+    }
+}
+
+
+/* =========================================================
+   CANVAS BUTTON FORMATION
+========================================================= */
+
+function startFallbackVehicle(
+    model
+){
+
+    selectedCar =
+        model;
+
+
+    if(
+        !createFallbackVehicle(
+            model
+        )
+    ){
+
+        return;
+    }
+
+
+    fallbackMorph =
+        0;
+
+
+    if(
+        !firstViewed[model]
+    ){
+
+        firstViewed[model] =
+            true;
+
+
+        whiteFormation =
+            true;
+
+
+        whiteStart =
+            performance.now();
+
+    }else{
+
+        beginFallbackMorph();
+    }
+}
+
+
+function beginFallbackMorph(){
+
+    whiteFormation =
+        false;
+
+
+    morphing =
+        true;
+
+
+    morphStart =
+        performance.now();
+}
+
+
+/* =========================================================
+   UNIFIED BUTTON OVERRIDE FOR CANVAS
+========================================================= */
+
+function bindCanvasButtons(){
+
+    /*
+       Buttons have already been bound by bindButtons().
+
+       Canvas mode gets its own listeners only because the
+       WebGL renderer does not exist.
+
+       We stop here and handle canvas interaction separately.
+    */
+}
+
+
+/* =========================================================
+   RESIZE LISTENER
+========================================================= */
+
+window.addEventListener(
+    "resize",
+    ()=>{
+
+        if(
+            engineMode ===
+            "webgl"
+        ){
+
+            resize();
+
+        }else if(
+            engineMode ===
+            "canvas"
+        ){
+
+            resizeCanvas();
+        }
+    }
+);
+
+
+/* =========================================================
+   WAIT UNTIL ALL VEHICLE FILES ARE LOADED
+========================================================= */
+
+window.addEventListener(
+    "load",
+    ()=>{
+
+        /*
+           DOM is ready.
+           initial.js has loaded.
+           All five car modules have loaded.
+        */
+
+        if(
+            typeof window.ToyotaCars.fortuner !==
+            "object" ||
+            typeof window.ToyotaCars.legender !==
+            "object" ||
+            typeof window.ToyotaCars.lc300 !==
+            "object" ||
+            typeof window.ToyotaCars["innova-crysta"] !==
+            "object" ||
+            typeof window.ToyotaCars["innova-hycross"] !==
+            "object"
+        ){
+
+            console.error(
+                "One or more Toyota vehicle modules failed to load."
+            );
+
+            return;
+        }
+
+
+        startApp();
+    }
+);

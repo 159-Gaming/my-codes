@@ -4,9 +4,15 @@ window.ToyotaCars =
     window.ToyotaCars || {};
 
 
-window.ToyotaCars["fortuner"] = {
+window.ToyotaCars["legender"] = {
 
-    build(count){
+    buildRange(
+        start,
+        end,
+        positions,
+        colors,
+        count
+    ){
 
         const T =
             window.ToyotaShapeTools;
@@ -14,70 +20,57 @@ window.ToyotaCars["fortuner"] = {
         const E =
             window.ToyotaEngine;
 
-        const positions =
-            new Float32Array(
-                count*3
-            );
 
-        const colors =
-            new Float32Array(
-                count*3
-            );
+        const frontWheel =
+            2.74;
 
+        const rearWheel =
+            -2.72;
 
-        const L=9.30;
-        const W=3.24;
-        const R=.82;
-
-        const front=2.72;
-        const rear=-2.72;
+        const wheelRadius =
+            .82;
 
 
-        /*
-           FIXED SIDE PROFILE
+        const profile = [
 
-           This is the target shape.
-           It is NOT regenerated randomly.
-        */
+            {x:-4.68,y:.58},
 
-        const profile=[
+            {x:-4.49,y:.88},
 
-            {x:-4.65,y:.62},
+            {x:-4.10,y:1.22},
 
-            {x:-4.45,y:1.05},
+            {x:-3.64,y:1.51},
 
-            {x:-4.00,y:1.40},
+            {x:-2.00,y:1.66},
 
-            {x:-2.10,y:1.70},
+            {x:-1.58,y:3.25},
 
-            {x:-1.70,y:3.40},
+            {x:.90,y:3.34},
 
-            {x:.90,y:3.48},
+            {x:1.18,y:1.64},
 
-            {x:1.15,y:1.68},
+            {x:2.90,y:1.62},
 
-            {x:2.85,y:1.66},
+            {x:4.14,y:1.42},
 
-            {x:4.15,y:1.48},
-
-            {x:4.65,y:.85}
+            {x:4.70,y:.78}
         ];
 
 
-        for(let i=0;i<count;i++){
+        for(
+            let i=start;
+            i<end;
+            i++
+        ){
 
             const s =
                 T.sequence(
                     i,
-                    11
+                    22
                 );
 
 
-            /*
-               PART DISTRIBUTION
-            */
-
-            const region =
+            const r =
                 s.z;
 
 
@@ -85,170 +78,374 @@ window.ToyotaCars["fortuner"] = {
             let c;
 
 
-            /* BODY */
-            if(region<.56){
+            /*
+               BODY
+            */
 
-                const x=
-                    -4.60+
-                    s.x*9.20;
+            if(r<.39){
 
-                const top=
+                const x =
+                    -4.62+
+                    s.x*9.24;
+
+
+                const roof =
                     T.profileY(
                         x,
                         profile
                     );
 
 
-                const side=
-                    s.y<.55
-                    ? -1
-                    : 1;
+                const side =
+                    s.y<.5?-1:1;
 
 
                 p={
+
                     x,
-                    y:.58+
-                      s.y*
-                      Math.max(
-                          .20,
-                          top-.58
-                      ),
+
+                    y:
+                        .59+
+                        s.y*
+                        Math.max(
+                            .22,
+                            roof-.59
+                        ),
+
                     z:
                         side*
-                        (
-                            1.40+
-                            s.x*.10
-                        )
+                        1.49
                 };
+
 
                 c=E.AQUA;
             }
 
 
-            /* WINDOWS */
-            else if(region<.72){
+            /*
+               BLACK ROOF
+            */
 
-                const x=
-                    -.95+
-                    s.x*2.35;
+            else if(r<.49){
 
-                const top=
-                    2.45+
-                    .20*
-                    (
-                        1-
-                        Math.abs(
-                            x/
-                            1.4
-                        )
+                const x =
+                    -1.60+
+                    s.x*2.52;
+
+
+                const roof =
+                    T.profileY(
+                        x,
+                        profile
                     );
 
 
                 p={
+
                     x,
+
                     y:
-                        2.00+
+                        roof+.015,
+
+                    z:
+                        -1.43+
+                        s.y*2.86
+                };
+
+
+                c=E.BLACK;
+            }
+
+
+            /*
+               WINDOWS
+            */
+
+            else if(r<.64){
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                const x =
+                    -1.37+
+                    s.x*2.34;
+
+
+                const roof =
+                    T.profileY(
+                        x,
+                        profile
+                    );
+
+
+                p={
+
+                    x,
+
+                    y:
+                        2.02+
                         s.y*
                         (
-                            top-2.00
+                            roof-
+                            2.02-
+                            .11
                         ),
+
                     z:
-                        s.y<.5
-                        ? -1.64
-                        : 1.64
+                        side*1.61
                 };
+
 
                 c=E.BLACK;
             }
 
 
-            /* WHEELS */
-            else if(region<.83){
+            /*
+               PILLARS
+            */
 
-                const which=
+            else if(r<.70){
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                let x;
+
+
+                if(s.x<.33)
+                    x=.96;
+
+                else if(s.x<.66)
+                    x=-.03;
+
+                else
+                    x=-1.45;
+
+
+                p={
+
+                    x,
+
+                    y:
+                        1.99+
+                        s.y*1.15,
+
+                    z:
+                        side*1.63
+                };
+
+
+                c=E.BLACK;
+            }
+
+
+            /*
+               WHEELS
+            */
+
+            else if(r<.80){
+
+                const x =
                     s.x<.5
-                    ? front
-                    : rear;
+                    ? frontWheel
+                    : rearWheel;
 
-                p=
+
+                p =
                     T.wheel(
                         s,
-                        which,
-                        R,
-                        s.y<.5
-                        ? -1.66
-                        : 1.66
+                        x,
+                        wheelRadius,
+                        s.y<.5?-1.69:1.69
                     );
 
-                c=E.BLACK;
-            }
-
-
-            /* GRILLE */
-            else if(region<.89){
-
-                p={
-                    x:4.68,
-                    y:.82+
-                      s.x*.80,
-                    z:
-                        -1.05+
-                        s.y*2.10
-                };
 
                 c=E.BLACK;
             }
 
 
-            /* HEADLIGHT */
-            else if(region<.935){
+            /*
+               ARCHES
+            */
 
-                p={
-                    x:4.70,
-                    y:1.26+
-                      s.x*.30,
-                    z:
-                        s.y<.5
-                        ? -1.20
-                        : 1.20
-                };
+            else if(r<.835){
+
+                const x =
+                    s.x<.5
+                    ? frontWheel
+                    : rearWheel;
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                p =
+                    T.wheelArch(
+                        s,
+                        x,
+                        wheelRadius*1.08,
+                        side*1.73
+                    );
+
 
                 c=E.BLACK;
             }
 
 
-            /* INDICATOR */
-            else if(region<.95){
+            /*
+               AGGRESSIVE CATAMARAN FRONT
+            */
+
+            else if(r<.89){
+
+                const center =
+                    s.y-.5;
+
+
+                const flare =
+                    Math.abs(center)*
+                    .40;
+
 
                 p={
-                    x:4.73,
-                    y:1.08+
-                      s.x*.25,
+
+                    x:4.77,
+
+                    y:
+                        .82+
+                        s.x*.63,
+
                     z:
-                        s.y<.5
-                        ? -.98
-                        : .98
+                        center*2.18+
+                        (
+                            center>0
+                            ? flare
+                            : -flare
+                        )
                 };
+
+
+                c=E.BLACK;
+            }
+
+
+            /*
+               SPLIT HEADLAMP ZONE
+            */
+
+            else if(r<.925){
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                p={
+
+                    x:4.80,
+
+                    y:
+                        1.38+
+                        s.x*.28,
+
+                    z:
+                        side*
+                        (
+                            .92+
+                            s.x*.27
+                        )
+                };
+
+
+                c=E.BLACK;
+            }
+
+
+            /*
+               YELLOW INDICATOR
+            */
+
+            else if(r<.952){
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                p={
+
+                    x:4.82,
+
+                    y:
+                        1.08+
+                        s.x*.22,
+
+                    z:
+                        side*.91
+                };
+
 
                 c=E.YELLOW;
             }
 
 
-            /* BLACK TRIM */
-            else{
+            /*
+               BLACK CATAMARAN BUMPER
+            */
+
+            else if(r<.978){
+
+                const side =
+                    s.y<.5?-1:1;
+
 
                 p={
-                    x:-2.40+
-                      s.x*4.80,
 
-                    y:.69+
-                      s.y*.16,
+                    x:
+                        4.78-
+                        s.x*.16,
+
+                    y:
+                        .49+
+                        s.x*.28,
 
                     z:
-                        s.x<.5
-                        ? -1.67
-                        : 1.67
+                        side*
+                        (
+                            .55+
+                            s.y*.86
+                        )
                 };
+
+
+                c=E.BLACK;
+            }
+
+
+            /*
+               SPORT SIDE TRIM
+            */
+
+            else{
+
+                const side =
+                    s.y<.5?-1:1;
+
+
+                p={
+
+                    x:
+                        -3.20+
+                        s.x*6.40,
+
+                    y:
+                        .64+
+                        s.y*.18,
+
+                    z:
+                        side*1.70
+                };
+
 
                 c=E.BLACK;
             }
@@ -260,17 +457,12 @@ window.ToyotaCars["fortuner"] = {
                 p
             );
 
+
             T.color(
                 colors,
                 i,
                 c
             );
         }
-
-
-        return {
-            positions,
-            colors
-        };
     }
 };
