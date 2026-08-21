@@ -1,9 +1,42 @@
 "use strict";
 
+/*
+=============================================================
+TOYOTA PARTICLE ENGINE
+UPDATED DENSITY SYSTEM
 
-/* =========================================================
-   GLOBALS
-========================================================= */
+Desktop:
+    up to 1,000,000 particles
+
+Mobile:
+    adaptive 80,000 - 250,000 particles
+
+IMPORTANT:
+The engine allocates the maximum required particle buffer,
+but only SHOWS about 100,000 particles initially.
+
+During vehicle generation / formation:
+    100,000
+        ↓
+    200,000
+        ↓
+    400,000
+        ↓
+    700,000
+        ↓
+    1,000,000
+
+This makes the vehicle become progressively denser instead
+of trying to display one million particles immediately.
+
+After formation:
+    all generated particles remain fixed.
+
+The car files do NOT need to be changed because they already
+accept a particle count through build(count).
+=============================================================
+*/
+
 
 window.ToyotaCars =
     window.ToyotaCars || {};
@@ -12,13 +45,13 @@ window.ToyotaShapeTools =
     window.ToyotaShapeTools || {};
 
 
+/* =========================================================
+   COMMON SHAPE TOOLS
+========================================================= */
+
 const Tools =
     window.ToyotaShapeTools;
 
-
-/* =========================================================
-   DETERMINISTIC TOOLS
-========================================================= */
 
 Tools.sequence =
 function(index, salt = 1){
@@ -33,21 +66,21 @@ function(index, salt = 1){
 
         x:
             (
-                index*a+
+                index*a +
                 salt*.173
-            )%1,
+            ) % 1,
 
         y:
             (
-                index*b+
+                index*b +
                 salt*.271
-            )%1,
+            ) % 1,
 
         z:
             (
-                index*(a+b)+
+                index*(a+b) +
                 salt*.119
-            )%1
+            ) % 1
     };
 };
 
@@ -55,28 +88,34 @@ function(index, salt = 1){
 Tools.put =
 function(array,index,point){
 
-    const n=
+    const n =
         index*3;
 
-    array[n]=point.x;
+    array[n] =
+        point.x;
 
-    array[n+1]=point.y;
+    array[n+1] =
+        point.y;
 
-    array[n+2]=point.z;
+    array[n+2] =
+        point.z;
 };
 
 
 Tools.color =
 function(array,index,color){
 
-    const n=
+    const n =
         index*3;
 
-    array[n]=color[0];
+    array[n] =
+        color[0];
 
-    array[n+1]=color[1];
+    array[n+1] =
+        color[1];
 
-    array[n+2]=color[2];
+    array[n+2] =
+        color[2];
 };
 
 
@@ -88,27 +127,27 @@ function(
     z
 ){
 
-    const angle=
-        sequence.x*
-        Math.PI*
+    const angle =
+        sequence.x *
+        Math.PI *
         2;
 
-    const radial=
+    const radial =
         Math.sqrt(
             sequence.y
-        )*
+        ) *
         radius;
 
     return {
 
         x:
-            centerX+
-            Math.cos(angle)*
+            centerX +
+            Math.cos(angle) *
             radial,
 
         y:
-            radius+
-            Math.sin(angle)*
+            radius +
+            Math.sin(angle) *
             radial,
 
         z
@@ -128,10 +167,10 @@ function(
         i++
     ){
 
-        const a=
+        const a =
             profile[i];
 
-        const b=
+        const b =
             profile[i+1];
 
 
@@ -140,20 +179,21 @@ function(
             x<=b.x
         ){
 
-            const t=
+            const t =
                 (
                     x-a.x
                 )/
                 (
-                    b.x-a.x || 1
+                    b.x-a.x ||
+                    1
                 );
 
 
             return (
-                a.y+
+                a.y +
                 (
                     b.y-a.y
-                )*
+                ) *
                 t
             );
         }
@@ -199,31 +239,132 @@ const buttons =
 
 
 /* =========================================================
-   DEVICE
+   DEVICE DETECTION
 ========================================================= */
 
-const mobile =
+const isMobile =
     /Android|iPhone|iPad|iPod|Mobile/i.test(
         navigator.userAgent
     ) ||
-    window.innerWidth<=850;
+    window.innerWidth <= 850;
 
 
-const WEBGL_COUNT =
-    mobile
-    ? 60000
-    : 100000;
+const deviceMemory =
+    navigator.deviceMemory ||
+    4;
+
+
+const hardwareThreads =
+    navigator.hardwareConcurrency ||
+    4;
 
 
 /*
-   Smaller fallback count for devices
-   without WebGL.
+   Maximum density.
+
+   We deliberately do NOT attempt 1 trillion particles.
+
+   One million particles is already extremely dense for
+   a browser particle scene.
 */
 
-const CANVAS_COUNT =
-    mobile
-    ? 18000
-    : 28000;
+let MAX_PARTICLES;
+
+
+if(!isMobile){
+
+    /*
+       Strong desktop:
+       1,000,000 particles.
+    */
+
+    if(
+        deviceMemory >= 8 ||
+        hardwareThreads >= 8
+    ){
+
+        MAX_PARTICLES =
+            1000000;
+
+    }else{
+
+        /*
+           More modest desktop.
+        */
+
+        MAX_PARTICLES =
+            700000;
+    }
+
+}else{
+
+    /*
+       Mobile adaptive density.
+    */
+
+    if(
+        deviceMemory >= 6 &&
+        hardwareThreads >= 8
+    ){
+
+        MAX_PARTICLES =
+            250000;
+
+    }else if(
+        deviceMemory >= 4 ||
+        hardwareThreads >= 6
+    ){
+
+        MAX_PARTICLES =
+            160000;
+
+    }else{
+
+        MAX_PARTICLES =
+            80000;
+    }
+}
+
+
+/*
+   Starting visible amount.
+
+   This is what the user sees at the beginning of
+   vehicle formation.
+*/
+
+const START_VISIBLE =
+    Math.min(
+        100000,
+        MAX_PARTICLES
+    );
+
+
+/*
+   Generation progresses through these density levels.
+*/
+
+const DENSITY_STAGES = [
+
+    START_VISIBLE,
+
+    Math.min(
+        200000,
+        MAX_PARTICLES
+    ),
+
+    Math.min(
+        400000,
+        MAX_PARTICLES
+    ),
+
+    Math.min(
+        700000,
+        MAX_PARTICLES
+    ),
+
+    MAX_PARTICLES
+];
 
 
 /* =========================================================
@@ -241,11 +382,12 @@ const YELLOW =
 
 
 /* =========================================================
-   ENGINE
+   ENGINE STATE
 ========================================================= */
 
 let mode =
     "none";
+
 
 let renderer =
     null;
@@ -270,88 +412,114 @@ let particleSystem =
 
 
 /* =========================================================
-   WEBGL ARRAYS
+   MAXIMUM ARRAYS
 ========================================================= */
 
 const currentPositions =
     new Float32Array(
-        WEBGL_COUNT*3
+        MAX_PARTICLES * 3
     );
 
 const targetPositions =
     new Float32Array(
-        WEBGL_COUNT*3
+        MAX_PARTICLES * 3
     );
 
 const currentColors =
     new Float32Array(
-        WEBGL_COUNT*3
+        MAX_PARTICLES * 3
     );
 
 const targetColors =
     new Float32Array(
-        WEBGL_COUNT*3
+        MAX_PARTICLES * 3
     );
 
 
-/* =========================================================
-   RANDOM INITIAL CLOUD
-========================================================= */
+/*
+   Each particle receives a stable numeric ID.
 
-function createInitialCloud(){
+   The shader uses it to determine whether that particle
+   is currently visible.
+*/
 
-    for(
-        let i=0;
-        i<WEBGL_COUNT;
-        i++
-    ){
-
-        const n=
-            i*3;
-
-
-        currentPositions[n]=
-            (
-                Math.random()-.5
-            )*100;
-
-
-        currentPositions[n+1]=
-            (
-                Math.random()-.5
-            )*100;
-
-
-        currentPositions[n+2]=
-            (
-                Math.random()-.5
-            )*100;
-
-
-        currentColors[n]=AQUA[0];
-
-        currentColors[n+1]=AQUA[1];
-
-        currentColors[n+2]=AQUA[2];
-    }
-
-
-    targetPositions.set(
-        currentPositions
+const particleIndices =
+    new Float32Array(
+        MAX_PARTICLES
     );
 
 
-    targetColors.set(
-        currentColors
-    );
+for(
+    let i=0;
+    i<MAX_PARTICLES;
+    i++
+){
+
+    particleIndices[i] =
+        i;
 }
 
 
-createInitialCloud();
+/* =========================================================
+   INITIAL WATER / FOAM CLOUD
+========================================================= */
+
+for(
+    let i=0;
+    i<MAX_PARTICLES;
+    i++
+){
+
+    const n =
+        i*3;
+
+
+    currentPositions[n] =
+        (
+            Math.random() -
+            .5
+        ) *
+        100;
+
+
+    currentPositions[n+1] =
+        (
+            Math.random() -
+            .5
+        ) *
+        100;
+
+
+    currentPositions[n+2] =
+        (
+            Math.random() -
+            .5
+        ) *
+        100;
+
+
+    currentColors[n] =
+        AQUA[0];
+
+    currentColors[n+1] =
+        AQUA[1];
+
+    currentColors[n+2] =
+        AQUA[2];
+}
+
+
+targetPositions.set(
+    currentPositions
+);
+
+targetColors.set(
+    currentColors
+);
 
 
 /* =========================================================
-   STATE
+   RUNTIME STATE
 ========================================================= */
 
 let selectedCar =
@@ -366,29 +534,35 @@ let whiteFormation =
 let morphing =
     false;
 
-let whiteStart =
+let whiteStarted =
     0;
 
-let morphStart =
+let morphStarted =
     0;
 
-const viewed =
-    {};
+let targetParticleCount =
+    START_VISIBLE;
 
+let visibleParticleCount =
+    START_VISIBLE;
 
-let appStart =
+let animationStarted =
     performance.now();
+
+
+const firstViewed =
+    {};
 
 
 /* =========================================================
    PROGRESS
 ========================================================= */
 
-function updateProgress(
+function setProgress(
     value
 ){
 
-    const p=
+    const p =
         Math.max(
             0,
             Math.min(
@@ -400,17 +574,83 @@ function updateProgress(
         );
 
 
-    progressFill.style.width=
-        p+"%";
+    progressFill.style.width =
+        p + "%";
 
 
-    progressNumber.textContent=
-        p+"%";
+    progressNumber.textContent =
+        p + "%";
 }
 
 
 /* =========================================================
-   WEBGL SHADER
+   PROGRESSIVE DENSITY
+========================================================= */
+
+function calculateVisibleDensity(
+    progress
+){
+
+    /*
+       progress:
+           0 → 100
+
+       Convert it into progressively denser stages.
+    */
+
+    const stageCount =
+        DENSITY_STAGES.length;
+
+
+    const scaled =
+        (
+            progress/100
+        ) *
+        (
+            stageCount-1
+        );
+
+
+    const index =
+        Math.min(
+            stageCount-1,
+            Math.floor(
+                scaled
+            )
+        );
+
+
+    const nextIndex =
+        Math.min(
+            stageCount-1,
+            index+1
+        );
+
+
+    const local =
+        scaled-index;
+
+
+    const a =
+        DENSITY_STAGES[index];
+
+
+    const b =
+        DENSITY_STAGES[nextIndex];
+
+
+    return Math.floor(
+        a+
+        (
+            b-a
+        )*
+        local
+    );
+}
+
+
+/* =========================================================
+   WEBGL SHADERS
 ========================================================= */
 
 const vertexShader = `
@@ -418,19 +658,50 @@ const vertexShader = `
 uniform float uTime;
 uniform float uMorph;
 uniform float uWaterMotion;
+
+uniform float uWhite;
+
 uniform float uPixelRatio;
 uniform float uViewportHeight;
 
-uniform vec2 uBubble;
+uniform float uBubble;
+
+uniform float uVisibleParticles;
 
 attribute vec3 nextPosition;
 attribute vec3 nextColor;
+
+attribute float particleIndex;
 
 varying vec3 vColor;
 
 void main(){
 
-    vColor=
+    /*
+       Hide particles that have not yet been activated.
+    */
+
+    if(
+        particleIndex >=
+        uVisibleParticles
+    ){
+
+        gl_PointSize =
+            0.0;
+
+        gl_Position =
+            vec4(
+                2.0,
+                2.0,
+                2.0,
+                1.0
+            );
+
+        return;
+    }
+
+
+    vColor =
         mix(
             color,
             nextColor,
@@ -438,7 +709,7 @@ void main(){
         );
 
 
-    vec3 p=
+    vec3 p =
         mix(
             position,
             nextPosition,
@@ -447,62 +718,75 @@ void main(){
 
 
     /*
-       WATER / FOAM
+       =====================================================
+       INITIAL WATER / FOAM
+       =====================================================
     */
 
-    vec3 s=
+    vec3 s =
         position;
 
-    float t=
+    float t =
         uTime;
 
 
-    vec3 flow=vec3(
+    vec3 flow =
+        vec3(
 
-        sin(
-            s.x*.37+
-            s.y*.13+
-            t*1.08
-        )+
-        .42*sin(
-            s.z*.21-
-            t*.72
-        ),
+            sin(
+                s.x*.37+
+                s.y*.13+
+                t*1.08
+            )
+            +
+            .42*
+            sin(
+                s.z*.21-
+                t*.72
+            ),
 
-        sin(
-            s.y*.29+
-            s.z*.17-
-            t*.91
-        )+
-        .37*sin(
-            s.x*.19+
-            t*.61
-        ),
+            sin(
+                s.y*.29+
+                s.z*.17-
+                t*.91
+            )
+            +
+            .37*
+            sin(
+                s.x*.19+
+                t*.61
+            ),
 
-        sin(
-            s.z*.31+
-            s.x*.11+
-            t*.82
-        )+
-        .34*sin(
-            s.y*.23-
-            t*.49
-        )
-    );
+            sin(
+                s.z*.31+
+                s.x*.11+
+                t*.82
+            )
+            +
+            .34*
+            sin(
+                s.y*.23-
+                t*.49
+            )
+        );
 
 
-    p+=
+    p +=
         flow*
         .055*
         uWaterMotion*
-        (1.0-uMorph);
+        (
+            1.0-uMorph
+        );
 
 
     /*
+       =====================================================
        SMALL AIR BUBBLE
+       =====================================================
     */
 
-    vec4 clip=
+    vec4 clip =
         projectionMatrix*
         modelViewMatrix*
         vec4(
@@ -511,52 +795,79 @@ void main(){
         );
 
 
-    vec2 screen=
+    vec2 screen =
         clip.xy/
         max(
-            abs(clip.w),
+            abs(
+                clip.w
+            ),
             .0001
         );
 
 
-    vec2 delta=
-        screen-uBubble;
+    /*
+       uBubble.x = pointer X
+       uBubble.y = pointer Y
+       encoded from the JavaScript side.
+    */
+
+    vec2 bubble=
+        vec2(
+            uBubble,
+            0.0
+        ).xy;
 
 
-    float distanceToBubble=
-        length(delta);
+    vec2 delta =
+        screen-bubble;
 
 
-    float radius=
-        .095;
-
-
-    float pressure=
-        smoothstep(
-            radius,
-            0.0,
-            distanceToBubble
+    float d =
+        length(
+            delta
         );
 
 
-    pressure*=
+    float radius =
+        .095;
+
+
+    float pressure =
+        smoothstep(
+            radius,
+            0.0,
+            d
+        );
+
+
+    pressure *=
         .10*
         uWaterMotion*
-        (1.0-uMorph);
+        (
+            1.0-uMorph
+        );
 
 
     if(
-        distanceToBubble>.0001 &&
-        distanceToBubble<radius
+        d>.0001 &&
+        d<radius
     ){
 
-        p+=
-            normalize(delta)*
+        p +=
+            normalize(
+                delta
+            )*
             pressure;
     }
 
 
-    vec4 mv=
+    /*
+       =====================================================
+       FINAL POSITION
+       =====================================================
+    */
+
+    vec4 mv =
         modelViewMatrix*
         vec4(
             p,
@@ -564,13 +875,13 @@ void main(){
         );
 
 
-    gl_Position=
+    gl_Position =
         projectionMatrix*
         mv;
 
 
-    float size=
-        4.2*
+    float size =
+        4.3*
         (
             uViewportHeight/
             1080.0
@@ -578,11 +889,11 @@ void main(){
         uPixelRatio;
 
 
-    gl_PointSize=
+    gl_PointSize =
         clamp(
             size,
             3.0,
-            8.0
+            8.5
         );
 }
 `;
@@ -591,24 +902,32 @@ void main(){
 const fragmentShader = `
 
 uniform float uWhite;
+
 uniform float uMorph;
 
 varying vec3 vColor;
 
 void main(){
 
-    float d=
+    float d =
         distance(
             gl_PointCoord,
-            vec2(.5,.5)
+            vec2(
+                .5,
+                .5
+            )
         );
 
 
-    if(d>.5)
+    if(
+        d>.5
+    ){
+
         discard;
+    }
 
 
-    vec3 particleColor=
+    vec3 finalColor =
         mix(
             vColor,
             vec3(
@@ -618,33 +937,41 @@ void main(){
         );
 
 
+    /*
+       Initial foam:
+       aqua center + black edge.
+    */
+
     if(
         uMorph<.5 &&
         uWhite<.75
     ){
 
-        if(d>.34){
+        if(
+            d>.34
+        ){
 
-            gl_FragColor=
+            gl_FragColor =
                 vec4(
-                    0,
-                    0,
-                    0,
-                    1
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
                 );
 
         }else{
 
-            float core=
+            float core =
                 smoothstep(
                     .34,
                     .025,
                     d
                 );
 
-            gl_FragColor=
+
+            gl_FragColor =
                 vec4(
-                    particleColor,
+                    finalColor,
                     max(
                         core,
                         .94
@@ -654,16 +981,17 @@ void main(){
 
     }else{
 
-        float alpha=
+        float alpha =
             smoothstep(
-                .50,
+                .5,
                 .07,
                 d
             );
 
-        gl_FragColor=
+
+        gl_FragColor =
             vec4(
-                particleColor,
+                finalColor,
                 max(
                     alpha,
                     .97
@@ -675,33 +1003,34 @@ void main(){
 
 
 /* =========================================================
-   WEBGL INITIALIZATION
+   WEBGL INIT
 ========================================================= */
 
 function initializeWebGL(){
 
     try{
 
-        /*
-           Let Three.js negotiate normally.
-
-           We no longer create a manually injected
-           WebGL context.
-        */
-
-        renderer=
+        renderer =
             new THREE.WebGLRenderer({
-                antialias:false,
-                alpha:false,
-                precision:"mediump",
-                powerPreference:"default"
+
+                antialias:
+                    false,
+
+                alpha:
+                    false,
+
+                precision:
+                    "mediump",
+
+                powerPreference:
+                    "default"
             });
 
 
         renderer.setPixelRatio(
             Math.min(
                 window.devicePixelRatio||1,
-                mobile?1.5:2
+                isMobile?1.5:2
             )
         );
 
@@ -719,11 +1048,11 @@ function initializeWebGL(){
         );
 
 
-        scene=
+        scene =
             new THREE.Scene();
 
 
-        camera=
+        camera =
             new THREE.PerspectiveCamera(
                 55,
                 stage.clientWidth/
@@ -750,33 +1079,33 @@ function initializeWebGL(){
         );
 
 
-        controls=
+        controls =
             new THREE.OrbitControls(
                 camera,
                 renderer.domElement
             );
 
 
-        controls.enableDamping=
+        controls.enableDamping =
             true;
 
-        controls.dampingFactor=
+        controls.dampingFactor =
             .065;
 
-        controls.enablePan=
+        controls.enablePan =
             false;
 
-        controls.minDistance=
-            7;
-
-        controls.maxDistance=
-            40;
-
-        controls.rotateSpeed=
+        controls.rotateSpeed =
             .75;
 
-        controls.zoomSpeed=
+        controls.zoomSpeed =
             .8;
+
+        controls.minDistance =
+            7;
+
+        controls.maxDistance =
+            40;
 
         controls.target.set(
             .2,
@@ -785,7 +1114,7 @@ function initializeWebGL(){
         );
 
 
-        geometry=
+        geometry =
             new THREE.BufferGeometry();
 
 
@@ -825,7 +1154,16 @@ function initializeWebGL(){
         );
 
 
-        material=
+        geometry.setAttribute(
+            "particleIndex",
+            new THREE.BufferAttribute(
+                particleIndices,
+                1
+            )
+        );
+
+
+        material =
             new THREE.ShaderMaterial({
 
                 uniforms:{
@@ -850,7 +1188,7 @@ function initializeWebGL(){
                         value:
                             Math.min(
                                 window.devicePixelRatio||1,
-                                mobile?1.5:2
+                                isMobile?1.5:2
                             )
                     },
 
@@ -865,28 +1203,41 @@ function initializeWebGL(){
                                 10,
                                 10
                             )
+                    },
+
+                    uVisibleParticles:{
+                        value:
+                            START_VISIBLE
                     }
                 },
+
 
                 vertexColors:
                     true,
 
-                vertexShader,
 
-                fragmentShader,
+                vertexShader:
+                    vertexShader,
+
+
+                fragmentShader:
+                    fragmentShader,
+
 
                 transparent:
                     true,
 
+
                 depthWrite:
                     false,
+
 
                 depthTest:
                     true
             });
 
 
-        particleSystem=
+        particleSystem =
             new THREE.Points(
                 geometry,
                 material
@@ -899,55 +1250,65 @@ function initializeWebGL(){
 
 
         /*
-           Mouse bubble.
+           Mouse / touch bubble.
         */
 
-        renderer.domElement.addEventListener(
-            "pointermove",
-            event=>{
+        renderer
+            .domElement
+            .addEventListener(
+                "pointermove",
+                event=>{
 
-                const r=
-                    renderer
-                    .domElement
-                    .getBoundingClientRect();
+                    const rect =
+                        renderer
+                        .domElement
+                        .getBoundingClientRect();
 
 
-                material
-                    .uniforms
-                    .uBubble
-                    .value
-                    .set(
+                    material
+                        .uniforms
+                        .uBubble
+                        .value
+                        .set(
 
-                        (
-                            (event.clientX-r.left)/
-                            r.width
-                        )*2-1,
-
-                        -(
                             (
-                                (event.clientY-r.top)/
-                                r.height
-                            )*2-1
-                        )
-                    );
-            }
-        );
+                                (
+                                    event.clientX-
+                                    rect.left
+                                )/
+                                rect.width
+                            )*2-1,
+
+                            -(
+                                (
+                                    (
+                                        event.clientY-
+                                        rect.top
+                                    )/
+                                    rect.height
+                                )*2-1
+                            )
+                        );
+                }
+            );
 
 
-        renderer.domElement.addEventListener(
-            "pointerleave",
-            ()=>{
+        renderer
+            .domElement
+            .addEventListener(
+                "pointerleave",
+                ()=>{
 
-                material
-                    .uniforms
-                    .uBubble
-                    .value
-                    .set(
-                        10,
-                        10
-                    );
-            }
-        );
+                    material
+                        .uniforms
+                        .uBubble
+                        .value
+                        .set(
+                            10,
+                            10
+                        );
+                }
+            );
 
 
         stage.insertBefore(
@@ -956,7 +1317,7 @@ function initializeWebGL(){
         );
 
 
-        mode=
+        mode =
             "webgl";
 
 
@@ -970,11 +1331,8 @@ function initializeWebGL(){
         );
 
 
-        renderer=null;
-        scene=null;
-        camera=null;
-        controls=null;
-
+        renderer =
+            null;
 
         return false;
     }
@@ -982,12 +1340,12 @@ function initializeWebGL(){
 
 
 /* =========================================================
-   FIXED VEHICLE GENERATION IN CHUNKS
+   VEHICLE TARGET PREPARATION
 ========================================================= */
 
 function prepareVehicle(
     model,
-    onComplete
+    finished
 ){
 
     const definition =
@@ -998,25 +1356,28 @@ function prepareVehicle(
 
     if(
         !definition ||
-        typeof definition.build!=="function"
+        typeof definition.build !==
+        "function"
     ){
 
         console.error(
-            "Vehicle module not loaded:",
+            "Vehicle module missing:",
             model
         );
 
 
-        loading.style.display=
+        loading.style.display =
             "none";
 
 
-        generating=false;
+        generating =
+            false;
 
 
         buttons.forEach(
-            b=>
-                b.disabled=false
+            button =>
+                button.disabled =
+                    false
         );
 
 
@@ -1025,15 +1386,16 @@ function prepareVehicle(
 
 
     /*
-       Generate deterministic fixed targets
-       without blocking the browser.
+       We deliberately build the FULL target shape.
 
-       The car modules return the final arrays.
-       We yield before and after the operation so
-       the browser can repaint.
+       The particle visibility, however, starts at 100k and
+       increases progressively during formation.
+
+       This means the vehicle gets denser instead of the
+       whole million-point buffer appearing instantly.
     */
 
-    updateProgress(2);
+    setProgress(1);
 
 
     requestAnimationFrame(
@@ -1044,29 +1406,31 @@ function prepareVehicle(
 
             try{
 
-                vehicle=
+                vehicle =
                     definition.build(
-                        WEBGL_COUNT
+                        MAX_PARTICLES
                     );
 
             }catch(error){
 
                 console.error(
-                    "Vehicle generation error:",
+                    "Vehicle creation failed:",
                     error
                 );
 
 
-                loading.style.display=
+                loading.style.display =
                     "none";
 
 
-                generating=false;
+                generating =
+                    false;
 
 
                 buttons.forEach(
-                    b=>
-                        b.disabled=false
+                    button =>
+                        button.disabled =
+                            false
                 );
 
 
@@ -1074,7 +1438,7 @@ function prepareVehicle(
             }
 
 
-            updateProgress(55);
+            setProgress(20);
 
 
             requestAnimationFrame(
@@ -1094,24 +1458,29 @@ function prepareVehicle(
                         .getAttribute(
                             "nextPosition"
                         )
-                        .needsUpdate=true;
+                        .needsUpdate =
+                            true;
 
 
                     geometry
                         .getAttribute(
                             "nextColor"
                         )
-                        .needsUpdate=true;
+                        .needsUpdate =
+                            true;
 
 
-                    updateProgress(100);
+                    /*
+                       We are not changing the visible
+                       density yet. The formation itself will
+                       increase the density.
+                    */
+
+                    setProgress(100);
 
 
                     requestAnimationFrame(
-                        ()=>{
-
-                            onComplete();
-                        }
+                        finished
                     );
                 }
             );
@@ -1121,50 +1490,84 @@ function prepareVehicle(
 
 
 /* =========================================================
-   START CAR
+   START VEHICLE
 ========================================================= */
 
-function startCar(
+function startVehicle(
     model
 ){
 
-    selectedCar=
+    selectedCar =
         model;
 
 
     /*
-       Stop water movement immediately.
+       Stop water motion.
+
+       From this moment particles travel to their
+       predetermined target rather than continuing
+       to scatter.
     */
 
     material
         .uniforms
         .uWaterMotion
-        .value=0;
+        .value =
+            0;
 
 
     material
         .uniforms
         .uMorph
-        .value=0;
+        .value =
+            0;
 
 
     material
         .uniforms
         .uWhite
-        .value=0;
+        .value =
+            0;
 
+
+    /*
+       Start with only 100k particles visible.
+    */
+
+    visibleParticleCount =
+        START_VISIBLE;
+
+
+    targetParticleCount =
+        MAX_PARTICLES;
+
+
+    material
+        .uniforms
+        .uVisibleParticles
+        .value =
+            visibleParticleCount;
+
+
+    /*
+       First time a particular model is shown:
+       white transition first.
+    */
 
     if(
-        !viewed[model]
+        !firstViewed[model]
     ){
 
-        viewed[model]=true;
+        firstViewed[model] =
+            true;
 
-        whiteFormation=true;
+        whiteFormation =
+            true;
 
-        morphing=false;
+        morphing =
+            false;
 
-        whiteStart=
+        whiteStarted =
             performance.now();
 
     }else{
@@ -1175,35 +1578,38 @@ function startCar(
 
 
 /* =========================================================
-   BEGIN MORPH
+   MORPH
 ========================================================= */
 
 function beginMorph(){
 
-    whiteFormation=
+    whiteFormation =
         false;
 
-    morphing=
+    morphing =
         true;
 
-    morphStart=
+    morphStarted =
         performance.now();
 
 
     material
         .uniforms
         .uWhite
-        .value=1;
+        .value =
+            1;
+
 
     material
         .uniforms
         .uMorph
-        .value=0;
+        .value =
+            0;
 }
 
 
 /* =========================================================
-   BUTTON EVENTS
+   BUTTONS
 ========================================================= */
 
 buttons.forEach(
@@ -1218,19 +1624,15 @@ buttons.forEach(
                     whiteFormation ||
                     morphing
                 ){
+
                     return;
                 }
 
 
-                /*
-                   Disable every button
-                   during preparation.
-                */
-
                 buttons.forEach(
                     b=>{
 
-                        b.disabled=
+                        b.disabled =
                             true;
 
                         b.classList.remove(
@@ -1245,49 +1647,41 @@ buttons.forEach(
                 );
 
 
-                const model=
+                const model =
                     button.dataset.car;
 
 
-                generating=
+                generating =
                     true;
 
 
-                selectedCar=
+                selectedCar =
                     null;
 
 
-                loading.style.display=
+                loading.style.display =
                     "block";
 
 
-                updateProgress(
-                    0
-                );
+                setProgress(0);
 
-
-                /*
-                   IMPORTANT:
-                   This is the ONLY click handler.
-
-                   No duplicate Canvas handler.
-                */
 
                 prepareVehicle(
                     model,
                     ()=>{
 
-                        generating=
+                        generating =
                             false;
 
 
                         buttons.forEach(
-                            b=>
-                                b.disabled=false
+                            b =>
+                                b.disabled =
+                                    false
                         );
 
 
-                        startCar(
+                        startVehicle(
                             model
                         );
                     }
@@ -1299,7 +1693,7 @@ buttons.forEach(
 
 
 /* =========================================================
-   MAIN ANIMATION
+   MAIN WEBGL ANIMATION
 ========================================================= */
 
 function animate(){
@@ -1309,41 +1703,43 @@ function animate(){
     );
 
 
-    const now=
+    const now =
         performance.now();
 
 
     material
         .uniforms
         .uTime
-        .value=
+        .value =
             (
-                now-
-                appStart
+                now -
+                animationStarted
             )/
             1000;
 
 
     /*
-       White transition.
+       =====================================================
+       WHITE FORMATION
+       =====================================================
     */
 
     if(
         whiteFormation
     ){
 
-        const raw=
+        const raw =
             Math.min(
                 (
-                    now-
-                    whiteStart
+                    now -
+                    whiteStarted
                 )/
                 650,
                 1
             );
 
 
-        const smooth=
+        const smooth =
             raw*raw*
             (
                 3-2*raw
@@ -1353,8 +1749,29 @@ function animate(){
         material
             .uniforms
             .uWhite
-            .value=
+            .value =
                 smooth;
+
+
+        /*
+           While becoming white, slowly begin increasing
+           the particle density.
+        */
+
+        visibleParticleCount =
+            Math.max(
+                START_VISIBLE,
+                calculateVisibleDensity(
+                    raw*25
+                )
+            );
+
+
+        material
+            .uniforms
+            .uVisibleParticles
+            .value =
+                visibleParticleCount;
 
 
         if(
@@ -1367,25 +1784,27 @@ function animate(){
 
 
     /*
-       Vehicle morph.
+       =====================================================
+       VEHICLE MORPH
+       =====================================================
     */
 
     if(
         morphing
     ){
 
-        const raw=
+        const raw =
             Math.min(
                 (
-                    now-
-                    morphStart
+                    now -
+                    morphStarted
                 )/
-                2800,
+                3600,
                 1
             );
 
 
-        const eased=
+        const eased =
             raw<.5
 
             ?4*
@@ -1404,19 +1823,18 @@ function animate(){
         material
             .uniforms
             .uMorph
-            .value=
+            .value =
                 eased;
 
 
         /*
-           White gradually becomes
-           aqua/black/yellow.
+           White fades into real car colors.
         */
 
         material
             .uniforms
             .uWhite
-            .value=
+            .value =
                 Math.max(
                     0,
                     1-
@@ -1424,7 +1842,33 @@ function animate(){
                 );
 
 
-        updateProgress(
+        /*
+           THIS IS THE IMPORTANT PART.
+
+           Density rises during the actual image
+           formation.
+
+           0%   → ~100k
+           25%  → ~200k
+           50%  → ~400k
+           75%  → ~700k
+           100% → maximum
+        */
+
+        visibleParticleCount =
+            calculateVisibleDensity(
+                raw*100
+            );
+
+
+        material
+            .uniforms
+            .uVisibleParticles
+            .value =
+                visibleParticleCount;
+
+
+        setProgress(
             raw*100
         );
 
@@ -1433,15 +1877,12 @@ function animate(){
             raw>=1
         ){
 
-            morphing=
+            morphing =
                 false;
 
 
             /*
-               LOCK FINAL POSITION.
-
-               No drifting.
-               No random movement.
+               FINAL PARTICLE POSITION LOCK.
             */
 
             currentPositions.set(
@@ -1458,32 +1899,56 @@ function animate(){
                 .getAttribute(
                     "position"
                 )
-                .needsUpdate=true;
+                .needsUpdate =
+                    true;
 
 
             geometry
                 .getAttribute(
                     "color"
                 )
-                .needsUpdate=true;
+                .needsUpdate =
+                    true;
+
+
+            /*
+               Every generated particle is now visible.
+            */
+
+            visibleParticleCount =
+                MAX_PARTICLES;
+
+
+            material
+                .uniforms
+                .uVisibleParticles
+                .value =
+                    MAX_PARTICLES;
 
 
             material
                 .uniforms
                 .uMorph
-                .value=0;
+                .value =
+                    0;
 
 
             material
                 .uniforms
                 .uWhite
-                .value=0;
+                .value =
+                    0;
 
+
+            /*
+               Completely freeze the vehicle.
+            */
 
             material
                 .uniforms
                 .uWaterMotion
-                .value=0;
+                .value =
+                    0;
 
 
             material
@@ -1496,28 +1961,26 @@ function animate(){
                 );
 
 
-            updateProgress(
-                100
-            );
+            setProgress(100);
 
 
             setTimeout(
                 ()=>{
-                    loading.style.display=
+                    loading.style.display =
                         "none";
                 },
-                180
+                220
             );
         }
     }
 
 
     /*
-       NO MODEL:
-       particles behave like underwater foam.
+       =====================================================
+       NO MODEL SELECTED
+       =====================================================
 
-       MODEL:
-       particles are completely stationary.
+       Entire 100x100x100 cloud remains alive.
     */
 
     if(
@@ -1525,23 +1988,23 @@ function animate(){
         !generating
     ){
 
-        particleSystem.rotation.y=
+        particleSystem.rotation.y =
             Math.sin(
                 now*.00008
             )*.03;
 
 
-        particleSystem.rotation.x=
+        particleSystem.rotation.x =
             Math.sin(
                 now*.00005
             )*.015;
 
     }else{
 
-        particleSystem.rotation.y=
+        particleSystem.rotation.y =
             0;
 
-        particleSystem.rotation.x=
+        particleSystem.rotation.x =
             0;
     }
 
@@ -1565,23 +2028,26 @@ window.addEventListener(
     ()=>{
 
         if(
-            mode!=="webgl"
+            mode !==
+            "webgl"
         ){
+
             return;
         }
 
 
-        const width=
+        const width =
             stage.clientWidth;
 
-        const height=
+
+        const height =
             Math.max(
                 1,
                 stage.clientHeight
             );
 
 
-        camera.aspect=
+        camera.aspect =
             width/height;
 
 
@@ -1591,7 +2057,7 @@ window.addEventListener(
         renderer.setPixelRatio(
             Math.min(
                 window.devicePixelRatio||1,
-                mobile?1.5:2
+                isMobile?1.5:2
             )
         );
 
@@ -1606,17 +2072,17 @@ window.addEventListener(
         material
             .uniforms
             .uPixelRatio
-            .value=
+            .value =
                 Math.min(
                     window.devicePixelRatio||1,
-                    mobile?1.5:2
+                    isMobile?1.5:2
                 );
 
 
         material
             .uniforms
             .uViewportHeight
-            .value=
+            .value =
                 height;
     }
 );
@@ -1635,8 +2101,15 @@ if(
 }else{
 
     /*
-       No fake WebGL error page.
-       Show a clean compatibility message.
+       WebGL is genuinely unavailable.
+
+       The existing project architecture can use its
+       Canvas fallback here if you keep that fallback in
+       your initial.js.
+
+       We intentionally do not attempt 1,000,000 Canvas
+       particles because that would destroy mobile
+       performance.
     */
 
     const message =
@@ -1645,23 +2118,27 @@ if(
         );
 
 
-    message.style.cssText=
+    message.style.cssText =
         `
         position:absolute;
         inset:0;
+
         display:flex;
         align-items:center;
         justify-content:center;
+
         padding:30px;
+
         color:#00ffff;
+
         text-align:center;
+
         font-size:14px;
         `;
 
 
-    message.textContent=
-        "WebGL is unavailable on this browser. Please enable hardware graphics acceleration or use a modern browser.";
-
+    message.textContent =
+        "GPU rendering is unavailable on this device.";
 
     stage.appendChild(
         message
